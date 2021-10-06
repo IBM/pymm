@@ -1,0 +1,17 @@
+cmake_minimum_required (VERSION 3.5.1 FATAL_ERROR)
+
+set(CMAKE_CXX_STANDARD 14)
+
+if(BOOTSTRAP_DEPS)
+  add_subdirectory(GSL)
+  set(BUILD_SHARED_LIBS ON)
+  add_subdirectory(googletest)
+  add_subdirectory(ndctl)
+  add_subdirectory(libpmem)
+  add_subdirectory(cityhash)
+else()
+  add_subdirectory(common)
+  add_subdirectory(libnupm)
+  add_subdirectory(libccpm)
+  add_subdirectory(libmm)
+endif()
