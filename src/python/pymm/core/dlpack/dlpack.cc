@@ -51,56 +51,6 @@ static size_t dlpack_get_DLTensor_size(int ndim) {
 }
 #endif
 
-/** 
- * Takes an ndarray (param ndarray) and determines required memory
- * 
- * @param self 
- * @param args 
- * @param kwds 
- * 
- * @return Size of required memory in bytes
- */
-static PyObject * pymmcore_dlpack_calculate_size(PyObject * self,
-                                                 PyObject * args,
-                                                 PyObject * kwargs)
-{
-  static const char *kwlist[] = {"ndarray",
-                                 NULL};
-
-  PyObject * array_obj = nullptr;
-  int type = 0;
-
-  if (! PyArg_ParseTupleAndKeywords(args,
-                                    kwargs,
-                                    "O",
-                                    const_cast<char**>(kwlist),
-                                    &array_obj)) {
-    PyErr_SetString(PyExc_RuntimeError,"bad arguments");
-    return NULL;
-  }
-
-  if (! PyArray_Check(array_obj)) {
-    PyErr_SetString(PyExc_RuntimeError,"not ndarray type");
-    return NULL;
-  }
-
-  PyArrayObject * ndarray = reinterpret_cast<PyArrayObject*>(array_obj);
-
-  /* sanity checks */
-  if (! PyArray_ISBEHAVED(ndarray)) {
-    PyErr_SetString(PyExc_RuntimeError,"misbehaving ndarray type not supported");
-    return NULL;
-  }
-
-  if (! PyArray_ISONESEGMENT(ndarray)) {
-    PyErr_SetString(PyExc_RuntimeError,"only single-segment ndarray supported");
-    return NULL;
-  }
-
-
-  Py_RETURN_NONE;
-
-}
 
 
 PyObject * pymmcore_dlpack_construct_meta(PyObject * self,
@@ -161,7 +111,6 @@ PyObject * pymmcore_dlpack_construct_meta(PyObject * self,
   /* handle shape */
   std::vector<int64_t> c_shape;
   if (PyList_Check(shape_obj)) {
-    PyObject * element;
     for(Py_ssize_t idx = 0; idx < PyList_Size(shape_obj); idx++) {
       auto element = PyList_GetItem(shape_obj, idx);
       unsigned long n = PyLong_AsUnsignedLong(element);
@@ -173,7 +122,6 @@ PyObject * pymmcore_dlpack_construct_meta(PyObject * self,
     }
   }
   else if (PyTuple_Check(shape_obj)) {
-    PyObject * element;
     for(Py_ssize_t idx = 0; idx < PyTuple_Size(shape_obj); idx++) {
       auto element = PyTuple_GetItem(shape_obj, idx);
       unsigned long n = PyLong_AsUnsignedLong(element);
@@ -426,7 +374,6 @@ PyObject * pymmcore_dlpack_get_capsule(PyObject * self,
   }
 
   auto hdr = reinterpret_cast<MetaHeader*>(metadata_buffer->buf);
-  auto dltensor = reinterpret_cast<DLTensor*>(&hdr[1]);
 
   hdr->refcnt += 1; /* does not need flusing */
 

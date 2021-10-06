@@ -5,6 +5,8 @@
 #include <libpmem.h>
 #include "mm_plugin_itf.h"
 #include "pymm_config.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 
 class Mmap_memory_provider;
 
@@ -324,6 +326,7 @@ public:
   }
 };
 
+#pragma GCC diagnostic pop
 
 #endif // __MEMORY_PROVIDERS__
 

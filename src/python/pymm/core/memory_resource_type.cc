@@ -12,6 +12,11 @@
 #include "metadata.h"
 #include "pymm_config.h"
 
+namespace globals {
+extern unsigned long debug_level;
+};
+   
+
 /* defaults */
 constexpr const char * DEFAULT_PMEM_PATH = "/mnt/pmem0";
 constexpr const char * DEFAULT_POOL_NAME = "default";

@@ -10,7 +10,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-#define PYMMCORE_API_VERSION "v0.1.40"
+#define PYMMCORE_API_VERSION "v0.2.0"
 #define STATUS_TEXT "(CC=env)"
 #define PAGE_SIZE 4096
 
@@ -36,6 +36,10 @@
 
 #include "ndarray_helpers.h"
 #include "pymm_config.h"
+
+namespace globals {
+static unsigned long debug_level = 0;
+};
 
 // forward declaration of custom types
 //
@@ -131,11 +135,9 @@ extern PyObject * pymmcore_dlpack_get_capsule(PyObject * self,
                                               PyObject * kwargs);
 
 
-#ifdef BUILD_PYMM_VALGRIND
 static PyObject * pymmcore_valgrind_trigger(PyObject * self,
                                             PyObject * args,
-                                            PyObject * kwargs);
-#endif
+                                            PyObject * kwargs)  __attribute__((used));
 
 
 static PyMethodDef pymmcore_methods[] =
