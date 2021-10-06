@@ -1,0 +1,21 @@
+[32m[LOG]: load_backend: (hstore-cc) (/mnt/pmem0) () (0x900000000) [0m
+[32m[LOG]: dax config: [{"path":"/mnt/pmem0","addr":38654705664}] [0m
+[32m[LOG]: arena_fs::region_create posix_fallocate: 1073741824: No space left on device [0m
+E
+======================================================================
+ERROR: test_tm (__main__.TestTransientMemory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/danielwaddington/pymm/testing/transient_memory.py", line 20, in setUp
+    self.s = pymm.shelf('myShelf',size_mb=1024,pmem_path='/mnt/pmem0',force_new=force_new)
+  File "/home/danielwaddington/pymm/build/src/python/pymm/build/lib.linux-x86_64-3.9/pymm/shelf.py", line 71, in __init__
+    self.mr = MemoryResource(name, size_mb, pmem_path=pmem_path, backend=backend,
+  File "/home/danielwaddington/pymm/build/src/python/pymm/build/lib.linux-x86_64-3.9/pymm/memoryresource.py", line 189, in __init__
+    super().__init__(pool_name=name, size_mb=size_mb, pmem_path=pmem_path,
+RuntimeError: unable to create/open pool
+
+----------------------------------------------------------------------
+Ran 1 test in 0.020s
+
+FAILED (errors=1)
+[--(PyMM)--] Version v0.2.0 (CC=env)

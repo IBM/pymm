@@ -1,0 +1,6 @@
+[submodule "src/lib/GSL"]
+	path = src/lib/GSL
+	url = https://github.com/dwaddington/GSL.git
+[submodule "src/lib/googletest"]
+	path = src/lib/googletest
+	url = https://github.com/dwaddington/googletest.git
