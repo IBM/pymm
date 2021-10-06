@@ -1,0 +1,103 @@
+#include <assert.h>
+#include <api/mcas_itf.h>
+#include <api/kvstore_itf.h>
+#include <Python.h>
+#include <structmember.h>
+
+typedef struct {
+  PyObject_HEAD
+  component::IKVStore * _store;
+} MemoryResource;
+
+static PyObject *
+MemoryResource_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+  auto self = (MemoryResource *)type->tp_alloc(type, 0);
+  assert(self);
+  return (PyObject*)self;
+}
+
+
+
+/** 
+ * tp_dealloc: Called when reference count is 0
+ * 
+ * @param self 
+ */
+static void
+MemoryResource_dealloc(MemoryResource *self)
+{
+  assert(self);
+
+  PLOG("MemoryResource: dealloc (%p)", self);
+  
+  if(self->_store)
+    self->_store->release_ref();
+  
+  assert(self);
+  Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+
+static int MemoryResource_init(MemoryResource *self, PyObject *args, PyObject *kwds)
+{
+  return 0;
+}
+
+static PyMemberDef MemoryResource_members[] =
+  {
+   //  {"port", T_ULONG, offsetof(MemoryResource, _port), READONLY, "Port"},
+   {NULL}
+  };
+
+static PyMethodDef MemoryResource_methods[] =
+  {
+   // {"open_pool",  (PyCFunction) open_pool, METH_VARARGS | METH_KEYWORDS, open_pool_doc},
+   // {"create_pool",  (PyCFunction) create_pool, METH_VARARGS | METH_KEYWORDS, create_pool_doc},
+   // {"delete_pool",  (PyCFunction) delete_pool, METH_VARARGS | METH_KEYWORDS, delete_pool_doc},
+   // {"get_stats",  (PyCFunction) get_stats, METH_VARARGS | METH_KEYWORDS, get_stats_doc},
+   {NULL}
+  };
+
+
+PyTypeObject MemoryResourceType = {
+  PyVarObject_HEAD_INIT(NULL, 0)
+  "pymm.MemoryResource",           /* tp_name */
+  sizeof(MemoryResource)   ,      /* tp_basicsize */
+  0,                       /* tp_itemsize */
+  (destructor) MemoryResource_dealloc,      /* tp_dealloc */
+  0,                       /* tp_print */
+  0,                       /* tp_getattr */
+  0,                       /* tp_setattr */
+  0,                       /* tp_reserved */
+  0,                       /* tp_repr */
+  0,                       /* tp_as_number */
+  0,                       /* tp_as_sequence */
+  0,                       /* tp_as_mapping */
+  0,                       /* tp_hash */
+  0,                       /* tp_call */
+  0,                       /* tp_str */
+  0,                       /* tp_getattro */
+  0,                       /* tp_setattro */
+  0,                       /* tp_as_buffer */
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+  "MemoryResource",              /* tp_doc */
+  0,                       /* tp_traverse */
+  0,                       /* tp_clear */
+  0,                       /* tp_richcompare */
+  0,                       /* tp_weaklistoffset */
+  0,                       /* tp_iter */
+  0,                       /* tp_iternext */
+  MemoryResource_methods,         /* tp_methods */
+  MemoryResource_members,         /* tp_members */
+  0,                       /* tp_getset */
+  0,                       /* tp_base */
+  0,                       /* tp_dict */
+  0,                       /* tp_descr_get */
+  0,                       /* tp_descr_set */
+  0,                       /* tp_dictoffset */
+  (initproc)MemoryResource_init,  /* tp_init */
+  0,            /* tp_alloc */
+  MemoryResource_new,             /* tp_new */
+  0, /* tp_free */
+};
