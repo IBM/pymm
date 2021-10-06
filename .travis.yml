@@ -3,7 +3,7 @@ language: minimal
 # add branches you want to trigger CI
 branches:
   only:
-    - master
+    - main
 
 sudo: required
 
