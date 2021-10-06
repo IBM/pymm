@@ -1,0 +1,65 @@
+language: minimal
+
+# add branches you want to trigger CI
+branches:
+  only:
+    - master
+
+sudo: required
+
+services:
+  - docker
+
+compiler:
+  - g++
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+
+# TODO: we can auto-build and publish this docker image
+# see https://docs.docker.com/docker-cloud/builds/automated-build
+env:
+  global:
+  matrix:
+    - CONTAINER_NAME="mcas-build-fedora27"
+      DOCKERIMG="fedora:27"
+      BOOTSTRAP_FILE="./install-yum-fc27.sh"
+#      HOSTMODULE="-v /lib/modules:/lib/modules:ro -v /usr/src:/usr/src:ro"
+    - CONTAINER_NAME="mcas-build-fedora30"
+      DOCKERIMG="fedora:30"
+      BOOTSTRAP_FILE="./install-yum-fc30.sh"
+    - CONTAINER_NAME="mcas-build-ubuntu1804"
+      DOCKERIMG="ubuntu:18.04"
+      BOOTSTRAP_FILE="./install-apts-ubuntu-18.sh"
+      
+
+  - sudo apt-get update
+  - docker run --rm -d --name ${CONTAINER_NAME} --cap-add=ALL
+    -v $(pwd):/travis ${HOSTMODULE}
+    ${DOCKERIMG}
+    tail -f /dev/null
+  - docker ps
+  - docker exec -t ${CONTAINER_NAME} bash  -c "
+    cd /travis ;     
+    cd /travis/deps ;
+    ${BOOTSTRAP_FILE} ;
+    cd /travis ; 
+    git submodule update --init --recursive ;
+    "
+
+script:
+  - docker exec -t ${CONTAINER_NAME} bash -c "
+    cd /travis &&    
+    ./tools/check_contents.sh ./src &&
+    TRAVIS_BUILD=1 ./deps/install-python-deps.sh &&
+    mkdir -p build &&
+    cd build &&
+    cmake -DBUILD_KERNEL_SUPPORT=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. &&
+    make bootstrap &&
+    make &&
+    make install"
+
+after_success:
+  - echo 'PyMM travis build complete'
