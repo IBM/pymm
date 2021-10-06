@@ -37,10 +37,6 @@
 #include "ndarray_helpers.h"
 #include "pymm_config.h"
 
-namespace globals {
-static unsigned long debug_level = 0;
-};
-
 // forward declaration of custom types
 //
 extern PyTypeObject MemoryResourceType;

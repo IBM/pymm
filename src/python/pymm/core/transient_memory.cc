@@ -29,6 +29,9 @@ static void __attribute__((destructor)) __cleanup__() {
 
 extern "C" void* Intercept_Malloc(void * ctx, size_t n)
 {
+  if(globals::debug_level > 2)
+    PLOG("transient_memory: intercept malloc(%p,%ld)", ctx, n);
+  
   if(n < LARGE_ALLOCATION_THRESHOLD)
     return malloc(n);
 
@@ -42,6 +45,9 @@ extern "C" void* Intercept_Malloc(void * ctx, size_t n)
 
 extern "C" void* Intercept_Calloc(void * ctx, size_t nelem, size_t elsize)
 {
+  if(globals::debug_level > 2)
+    PLOG("transient_memory: intercept calloc(%p,%ld,%ld)", ctx, nelem, elsize);
+  
   if(nelem*elsize < LARGE_ALLOCATION_THRESHOLD)
     return calloc(nelem,elsize); 
     
@@ -55,6 +61,9 @@ extern "C" void* Intercept_Calloc(void * ctx, size_t nelem, size_t elsize)
 
 extern "C" void* Intercept_Realloc(void * ctx, void * p, size_t n)
 {
+  if(globals::debug_level > 2)
+    PLOG("transient_memory: intercept remalloc(%p,%p,%ld)", ctx, p, n);
+  
   if(n < LARGE_ALLOCATION_THRESHOLD)
     return realloc(p, n);
   
@@ -64,6 +73,9 @@ extern "C" void* Intercept_Realloc(void * ctx, void * p, size_t n)
 
 extern "C" void Intercept_Free(void * ctx, void * p)
 {
+  if(globals::debug_level > 2)
+    PLOG("transient_memory: intercept free(%p,%p)", ctx, p);
+  
   g_provider->free(p);
 }
 
