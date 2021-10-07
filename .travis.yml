@@ -21,14 +21,14 @@ notifications:
 env:
   global:
   matrix:
-    - CONTAINER_NAME="mcas-build-fedora27"
+    - CONTAINER_NAME="pymm-build-fedora27"
       DOCKERIMG="fedora:27"
       BOOTSTRAP_FILE="./install-yum-fc27.sh"
 #      HOSTMODULE="-v /lib/modules:/lib/modules:ro -v /usr/src:/usr/src:ro"
-    - CONTAINER_NAME="mcas-build-fedora30"
+    - CONTAINER_NAME="pymm-build-fedora30"
       DOCKERIMG="fedora:30"
       BOOTSTRAP_FILE="./install-yum-fc30.sh"
-    - CONTAINER_NAME="mcas-build-ubuntu1804"
+    - CONTAINER_NAME="pymm-build-ubuntu1804"
       DOCKERIMG="ubuntu:18.04"
       BOOTSTRAP_FILE="./install-apts-ubuntu-18.sh"
       
@@ -63,4 +63,4 @@ script:
     make install"
 
 after_success:
-  - echo 'MCAS travis build complete'
+  - echo 'PyMM travis build complete'
