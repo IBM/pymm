@@ -1,0 +1,3 @@
+#!/bin/bash
+#PYTHONPATH=$ENV{PYTHONPATH}:${CMAKE_CURRENT_BINARY_DIR}/build/${LIBDIR} gdb --args "${PYTHON}" -i ${CMAKE_INSTALL_PREFIX}/lib/pymm-shell-init.py
+PYTHONPATH=$ENV{PYTHONPATH}:${CMAKE_CURRENT_BINARY_DIR}/build/${LIBDIR} "${PYTHON}" -i ${CMAKE_INSTALL_PREFIX}/lib/pymm-shell-init.py
