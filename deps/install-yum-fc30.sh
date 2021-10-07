@@ -4,7 +4,7 @@
 
 # libuuid which gmp-devel mpfr-devel CUnit CUnit-devel
 dnf -y --nodocs --setopt=install_weak_deps=False install automake cmake3 git make gcc-c++ make libtool \
-    openssl-devel python3 python3-devel kmod-libs pkg-config bash-completion \
+    python3 python3-devel kmod-libs pkg-config bash-completion \
     kmod-devel libudev-devel json-c-devel uuid-devel \
     boost boost-devel boost-python3 boost-python3-devel \
     elfutils-libelf-devel \
@@ -15,9 +15,7 @@ dnf -y --nodocs --setopt=install_weak_deps=False install automake cmake3 git mak
     libuuid-devel \
     numactl-devel \
     python-devel \
-    rapidjson-devel \
-    openssl-devel golang gnutls gnutls-devel \
-    lcov zeromq-devel czmq-devel \
+    lcov \
     libstdc++-static glibc-static
 
 dnf clean packages
