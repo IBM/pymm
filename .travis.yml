@@ -57,7 +57,7 @@ script:
     TRAVIS_BUILD=1 ./deps/install-python-deps.sh &&
     mkdir -p build &&
     cd build &&
-    cmake -DBUILD_KERNEL_SUPPORT=OFF -DFLATBUFFERS_BUILD_TESTS=0 -DTBB_BUILD_TESTS=0 -DBUILD_PYTHON_SUPPORT=1 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist -DTBB_CI_BUILD=ON .. &&
+    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. &&
     make bootstrap &&
     make &&
     make install"
