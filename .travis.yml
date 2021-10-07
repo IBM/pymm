@@ -36,7 +36,7 @@ env:
       
 
   - sudo apt-get update
-  - docker run --rm -d --name ${CONTAINER_NAME} --cap-add=ALL
+  - docker run --rm -d --name ${CONTAINER_NAME} --privileged --cap-add=ALL
     -v $(pwd):/travis ${HOSTMODULE}
     ${DOCKERIMG}
     tail -f /dev/null
