@@ -378,13 +378,18 @@ class shelf():
                 "pymm.bytes"]
 
 
-    def tx_begin(self):
+    def tx_begin_all(self):
         '''
-        Begin shelf-wide transaction. Currently new values created on the shelf are not included
+        Begin shelf-wide transaction. This transaction includes all
+        variables currently on the shelf.  Currently new values
+        created on the shelf during the transaction are not included
         as part of the transaction.
+
         '''        
         # iterate through shelf variables and set TXBIT_MULTIVAR
         global tx_vars
+        tx_vars = []
+        
         for varname in self.get_item_names(all=False):
 
             # get header info
@@ -397,7 +402,40 @@ class shelf():
             metadata_set_tx_bit(hdr, TXBIT_MULTIVAR)
             tx_vars.append(varname)
                     
-        return vars
+        return tx_vars
+
+    @methodcheck(types=[list])
+    def tx_begin(self, vars):
+        '''
+        Begin multi-variable transaction. This transaction includes
+        selected variables on the shelf.  New values created on the
+        shelf during the transaction are not included as part of the
+        transaction.
+
+        '''        
+        global tx_vars
+        tx_vars = []
+        
+        for var in vars:
+            
+            if isinstance(var,str):
+                varname = var
+            elif isinstance(var, ShelvedCommon):
+                varname = var.name
+            else:
+                raise RuntimeError('bad member in variable list')
+            
+            if self.__dict__[varname]._metadata_named_memory == None:
+                    raise RuntimeError('var {} has no metadata'.format(varname))
+
+            metadata_memory = self.__dict__[varname]._metadata_named_memory.buffer
+            
+            hdr = construct_header_from_buffer(metadata_memory)
+            metadata_set_tx_bit(hdr, TXBIT_MULTIVAR)
+            tx_vars.append(varname)
+
+        return tx_vars
+                
 
     def tx_end(self):
         '''

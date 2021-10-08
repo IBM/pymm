@@ -40,13 +40,13 @@ class TestTransactions(unittest.TestCase):
         shelf.persist()
         shelf.inspect(verbose=False)
 
-    def test_shelf_transaction(self):
+    def Xtest_shelf_transaction(self):
         shelf = pymm.shelf('myTransactionsShelf',size_mb=1024,pmem_path='/mnt/pmem0',force_new=True)
 
         shelf.n = pymm.ndarray((100,100),dtype=np.uint8)
         shelf.m = pymm.ndarray((100,100),dtype=np.uint8)
 
-        print(shelf.tx_begin())
+        shelf.tx_begin_all()
 
         for i in np.arange(0,10):
             shelf.n += 1
@@ -57,6 +57,26 @@ class TestTransactions(unittest.TestCase):
         shelf.tx_end()
         shelf.inspect(verbose=False)
         #shelf.erase('n')
+
+    def test_shelf_transaction_list(self):
+        shelf = pymm.shelf('myTransactionsShelf',size_mb=1024,pmem_path='/mnt/pmem0',force_new=True)
+
+        shelf.n = pymm.ndarray((100,100),dtype=np.uint8)
+        shelf.m = pymm.ndarray((100,100),dtype=np.uint8)
+        shelf.p = pymm.ndarray((100,100),dtype=np.uint8)
+
+        print("TX_BEGIN")
+        shelf.tx_begin([shelf.n, shelf.m])
+
+        for i in np.arange(0,10):
+            shelf.n += 1
+            shelf.m += 3
+        
+        print(shelf.items)
+        shelf.inspect(verbose=False)
+        shelf.tx_end()
+        print("TX_END")
+        
         
 if __name__ == '__main__':
     unittest.main()
