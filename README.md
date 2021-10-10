@@ -57,9 +57,6 @@ make -j
 ## Verify 
 ```
 $ python3
-Python 3.6.8 (default, Mar 18 2021, 08:58:41)
-[GCC 8.4.1 20200928 (Red Hat 8.4.1-1)] on linux
-Type "help", "copyright", "credits" or "license" for more information.
 >>> import pymm
 [--(PyMM)--] Version <current version> (CC=env)
 [LOG]: Pymm extension
