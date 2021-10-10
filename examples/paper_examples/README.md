@@ -20,9 +20,9 @@ mkdir /mnt/pmem0/mystuff
 ## Optane-PM - App-Direct mode - dev-dax
 ``` bash
 sudo ndctl list
-sudo ndctl destroy-namespace namespace0.0 -f
+sudo ndctl destroy-namespace namespace1.0 -f
 sudo ndctl create-namespace -m devdax -e namespace1.0 --size 811748818944  --align 2M --force
-sudo chmod go+rw /dev/dax0.0
+sudo chmod go+rw /dev/dax1.0
 ```
 
 
