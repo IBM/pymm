@@ -15,37 +15,25 @@ PyMM is implemented as a Python 3 library and CPython-based extension. The low-l
 * [Examples](./examples/)
 
 
-# How to Build
+## How to Build
 
-## Update submodules
+Update submodules
 ```bash
-cd mcas
 git submodule update --init --recursive
 ```
 
 
-## Run dependencies for your OS 
-
+Run python dependencies
 ``` bash
-cd deps
-A numbered list
-# How to Build
-
-## Update submodules
-```bash
-cd mcas
-git submodule update --init --recursive
-```
-
-
-## Run dependencies for your OS 
-
-``` bash
-./install-python-deps.sh
-cd ../
+./deps/install-python-deps.sh
 ``` 
 
-## Configure as debug build:
+Create Build directory
+``` bash
+make build
+``` 
+
+Configure as debug build:
 
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. 
