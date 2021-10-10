@@ -30,7 +30,8 @@ Run python dependencies
 
 Create Build directory
 ``` bash
-make build
+mkdir build
+cd build
 ``` 
 
 Configure as debug build:
@@ -62,5 +63,6 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> import pymm
 [--(PyMM)--] Version <current version> (CC=env)
 [LOG]: Pymm extension
+>>
 ```	
 
