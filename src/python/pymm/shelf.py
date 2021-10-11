@@ -17,6 +17,7 @@
 import pymmcore
 import pymm
 import gc
+import copy
 import sys
 import copy
 import numpy
@@ -24,10 +25,15 @@ import torch
 import weakref
 import numpy as np
 import torch
+import ctypes
 
 from .metadata import *
 from .memoryresource import MemoryResource
 from .check import methodcheck
+
+_decref = ctypes.pythonapi.Py_DecRef
+_decref.argtypes = [ctypes.py_object]
+_decref.restype = None
 
 # globals
 tx_vars = []
@@ -271,11 +277,22 @@ class shelf():
         return items
             
         
-    @methodcheck(types=[str])
-    def erase(self, name):
+    def erase(self, var):
         '''
         Erase and remove variable from the shelf
         '''
+        if isinstance(var,str):
+            name = var
+        elif isinstance(var, ShelvedCommon):
+            name = var.name
+            if name == None:
+                name = var.name_on_shelf # torch tensor special handling
+            _decref(var)
+            del var
+        else:
+            raise RuntimeError('bad erase parameter')
+
+        print("ERASING >", name , "<")
         # check the thing we are trying to erase is on the shelf
         if not name in self.__dict__:
             raise RuntimeError('attempting to erase something that is not on the shelf')

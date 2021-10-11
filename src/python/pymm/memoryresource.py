@@ -102,7 +102,7 @@ class MemoryReference():
         '''
         return (hex(pymmcore.memoryview_addr(self.buffer)), len(self.buffer))
 
-    def tx_begin(self, value_named_memory=None):
+    def tx_begin(self, value_named_memory=None, check=True):
         '''
         Add region of memory to transaction.  This is called on metadata named memory,
         and passed the value named memory if it exists (i.e. if it is not contiguous)
@@ -111,10 +111,12 @@ class MemoryReference():
             assert isinstance(value_named_memory, MemoryReference)
 
         # sanity check - but not fool proof!
-        hdr = construct_header_from_buffer(self.buffer)
-
-        if metadata_check_tx_bit(hdr, TXBIT_DIRTY):
-            return # nested, don't do anything
+        if check:
+            hdr = construct_header_from_buffer(self.buffer)
+            if metadata_check_tx_bit(hdr, TXBIT_DIRTY):
+                return # nested, don't do anything
+        else:
+            hdr = construct_header_on_buffer(self.buffer)
             
         metadata_set_dirty_tx_bit(hdr)
             
@@ -125,9 +127,6 @@ class MemoryReference():
         '''
         Commit transaction for variable
         '''        
-        if self._use_sw_tx: # optional undo logging hook
-            self.tx_handler.tx_commit(value_named_memory)
-
         hdr = construct_header_from_buffer(self.buffer)
 
         # if we are in a multi-variable transaction, then delay commit
@@ -140,6 +139,11 @@ class MemoryReference():
             value_named_memory.persist()
 
         metadata_clear_dirty_tx_bit(hdr)
+        
+        if self._use_sw_tx: # optional undo logging hook
+            self.tx_handler.tx_commit(value_named_memory)
+
+
 
         
     def tx_multivar_commit(self, value_named_memory=None):

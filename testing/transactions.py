@@ -65,6 +65,8 @@ class TestTransactions(unittest.TestCase):
         shelf.m = pymm.ndarray((100,100),dtype=np.uint8)
         shelf.p = pymm.ndarray((100,100),dtype=np.uint8)
 
+        shelf.inspect(verbose=False)
+
         print("TX_BEGIN")
         shelf.tx_begin([shelf.n, shelf.m])
 
@@ -72,8 +74,6 @@ class TestTransactions(unittest.TestCase):
             shelf.n += 1
             shelf.m += 3
         
-        print(shelf.items)
-        shelf.inspect(verbose=False)
         shelf.tx_end()
         print("TX_END")
         
