@@ -96,8 +96,8 @@ class shelved_float_number(ShelvedCommon):
         memory = self._memory_resource
         memref = memory.create_named_memory(self.name + '-tmp', total_len, 8, False)
 
-        memref.tx_begin() # not sure if we need this
-        hdr = construct_header_on_buffer(memref.buffer, DataType_NumberFloat)
+        memref.tx_begin(value_named_memory=None, check=False) # not sure if we need this
+        hdr = construct_header_on_buffer(memref.buffer, DataType_NumberFloat, txbits=TXBIT_DIRTY)
         
         # copy into memory resource
         memref.buffer[HeaderSize:] = value_bytes
