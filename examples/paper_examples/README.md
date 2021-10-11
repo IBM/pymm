@@ -1,5 +1,5 @@
 # Code examples for published papers
-1. [Non-Volatile Memory Accelerated Posterior Estimation - HPEC2021](https://github.com/IBM/mcas/wiki/List-of-MCAS-publications)
+1. [Non-Volatile Memory Accelerated Posterior Estimation - HPEC2021](https://github.com/IBM/mcas/wiki/List-of-PyMM-publications)
 
 
 # Helpful commands for creating different configurations:
