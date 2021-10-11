@@ -77,8 +77,8 @@ class shelved_string(ShelvedCommon):
             total_len = len(string_value) + HeaderSize
             memref = memory_resource.create_named_memory(name, total_len, 8, False)
 
-            memref.tx_begin()
-            hdr = construct_header_on_buffer(memref.buffer, DataType_String)
+            memref.tx_begin(value_named_memory=None, check=False)
+            hdr = construct_header_on_buffer(memref.buffer, DataType_String, txbits=TXBIT_DIRTY)
             
             if encoding == 'ascii':
                 hdr.subtype = DataSubType_Ascii
@@ -102,7 +102,7 @@ class shelved_string(ShelvedCommon):
         self._metadata_named_memory = memref
         self._value_named_memory = None
         self.encoding = encoding
-        self._name = name
+        self.name = name
 
     def __repr__(self):
         # TODO - some how this is keeping a reference? gc.collect() clears it.
@@ -144,7 +144,7 @@ class shelved_string(ShelvedCommon):
         
         memory = self._memory_resource
         total_len = HeaderSize + len(new_str)
-        memref = memory.create_named_memory(self._name + "-tmp", total_len, 8, False)
+        memref = memory.create_named_memory(self.name + "-tmp", total_len, 8, False)
 
         hdr = init_header_from_buffer(memref.buffer)
         hdr.type = DataType_String
@@ -171,13 +171,13 @@ class shelved_string(ShelvedCommon):
         gc.collect()
 
         # swap names
-        memory.atomic_swap_names(self._name, self._name + "-tmp")
+        memory.atomic_swap_names(self.name, self.name + "-tmp")
 
         # erase old data
-        memory.erase_named_memory(self._name + "-tmp")
+        memory.erase_named_memory(self.name + "-tmp")
 
         # open new data
-        memref = memory.open_named_memory(self._name)
+        memref = memory.open_named_memory(self.name)
         self._metadata_named_memory = memref
         self.view = memoryview(memref.buffer[HeaderSize:])
         return self

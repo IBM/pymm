@@ -68,8 +68,8 @@ class shelved_float_number(ShelvedCommon):
             total_len = HeaderSize + len(value_bytes)
             memref = memory_resource.create_named_memory(name, total_len, 8, False)
 
-            memref.tx_begin()
-            hdr = construct_header_on_buffer(memref.buffer, DataType_NumberFloat)
+            memref.tx_begin(value_named_memory=None, check=False)
+            hdr = construct_header_on_buffer(memref.buffer, DataType_NumberFloat, txbits=TXBIT_DIRTY)
                         
             # copy data into memory resource
             memref.buffer[HeaderSize:] = value_bytes
@@ -79,7 +79,7 @@ class shelved_float_number(ShelvedCommon):
             construct_header_from_buffer(memref.buffer)
 
         self._cached_value = float(number_value)
-        self._name = name
+        self.name = name
         # hold a reference to the memory resource
         self._memory_resource = memory_resource
         self._metadata_named_memory = memref
@@ -94,10 +94,10 @@ class shelved_float_number(ShelvedCommon):
         total_len = HeaderSize + len(value_bytes)
 
         memory = self._memory_resource
-        memref = memory.create_named_memory(self._name + '-tmp', total_len, 8, False)
+        memref = memory.create_named_memory(self.name + '-tmp', total_len, 8, False)
 
-        memref.tx_begin() # not sure if we need this
-        hdr = construct_header_on_buffer(memref.buffer, DataType_NumberFloat)
+        memref.tx_begin(value_named_memory=None, check=False) # not sure if we need this
+        hdr = construct_header_on_buffer(memref.buffer, DataType_NumberFloat, txbits=TXBIT_DIRTY)
         
         # copy into memory resource
         memref.buffer[HeaderSize:] = value_bytes
@@ -108,12 +108,12 @@ class shelved_float_number(ShelvedCommon):
         gc.collect()
 
         # swap names
-        memory.atomic_swap_names(self._name, self._name + "-tmp")
+        memory.atomic_swap_names(self.name, self.name + "-tmp")
 
         # erase old data
-        memory.erase_named_memory(self._name + "-tmp")
+        memory.erase_named_memory(self.name + "-tmp")
         
-        memref = memory.open_named_memory(self._name)
+        memref = memory.open_named_memory(self.name)
         self._metadata_named_memory = memref
         self._value_named_memory = None
         self._cached_value = value
