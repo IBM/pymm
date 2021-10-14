@@ -84,18 +84,20 @@ class shelved_linked_list(ShelvedCommon):
 
         if memref == None:
 
-            # create metadata (data is separate_
+            # create metadata (data is separate)
             memref = memory_resource.create_named_memory(name, HeaderSize, 1, False)
 
-            memref.tx_begin()
-            hdr = construct_header_on_buffer(memref.buffer, DataType_LinkedList)            
+            # create value memory
+            self._value_named_memory = memory_resource.create_named_memory(name + '-value',
+                                                                           MEMORY_INCREMENT_SIZE, 64, False)
+
+
+            memref.tx_begin(value_named_memory=self._value_named_memory, check=False)
+            hdr = construct_header_on_buffer(memref.buffer, DataType_LinkedList, txbits=TXBIT_DIRTY)            
             memref.tx_commit()
 
             self._metadata_named_memory = memref
 
-            # initialize internal structure with allocated memory
-            self._value_named_memory = memory_resource.create_named_memory(name + '-value',
-                                                                           MEMORY_INCREMENT_SIZE, 64, False)
             self._internal = pymmcore.List(buffer=self._value_named_memory.buffer, rehydrate=False)
 
         else:
@@ -108,7 +110,7 @@ class shelved_linked_list(ShelvedCommon):
             self._internal = pymmcore.List(buffer=self._value_named_memory.buffer, rehydrate=True)
 
         # save name
-        self._name = name
+        self.name = name
 
         
     def append(self, element):
@@ -124,7 +126,7 @@ class shelved_linked_list(ShelvedCommon):
             # use shelf to store value
             self._tag += 1
             tag = self._tag
-            name = '_' + self._name + '_' + str(tag)
+            name = '_' + self.name + '_' + str(tag)
             self._shelf.__setattr__(name, element) # like saying shelf.name = element
             return self._internal.append(element=None, tag=tag)
 
@@ -146,7 +148,7 @@ class shelved_linked_list(ShelvedCommon):
         '''
         Generate name of a tagged object
         '''
-        return '_' + self._name + '_' + str(tag)
+        return '_' + self.name + '_' + str(tag)
                     
 
     def __len__(self):
@@ -187,7 +189,7 @@ class shelved_linked_list(ShelvedCommon):
                 # use shelf to store value
                 self._tag += 1
                 tag = self._tag
-                name = '_' + self._name + '_' + str(tag)
+                name = '_' + self.name + '_' + str(tag)
                 self._shelf.__setattr__(name, value) # like saying shelf.name = element
                 rc = self._internal.setitem(item=item, value=None, tag=tag)
             else:

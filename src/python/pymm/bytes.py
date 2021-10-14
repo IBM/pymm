@@ -101,8 +101,8 @@ class shelved_bytes(ShelvedCommon):
             total_len = HeaderSize + len(bytes_value)
             memref = memory_resource.create_named_memory(name, total_len, 8, False)
 
-            memref.tx_begin()
-            hdr = construct_header_on_buffer(memref.buffer, DataType_Bytes)
+            memref.tx_begin(value_named_memory=None, check=False)
+            hdr = construct_header_on_buffer(memref.buffer, DataType_Bytes, txbits=TXBIT_DIRTY)
             
             if encoding == 'ascii':
                 hdr.subtype = DataSubType_Ascii
@@ -126,7 +126,7 @@ class shelved_bytes(ShelvedCommon):
         self._metadata_named_memory = memref
         self._value_named_memory = None
         self.encoding = encoding
-        self._name = name
+        self.name = name
 
     def __repr__(self):
         return python_type_bytes(self.view)
@@ -167,7 +167,7 @@ class shelved_bytes(ShelvedCommon):
         memory = self._memory_resource
 
         total_len = HeaderSize + len(new_bytes)
-        memref = memory.create_named_memory(self._name + "-tmp", total_len, 8, False)
+        memref = memory.create_named_memory(self.name + "-tmp", total_len, 8, False)
 
         hdr = init_header_from_buffer(memref.buffer)
         hdr.type = DataType_Bytes
@@ -194,13 +194,13 @@ class shelved_bytes(ShelvedCommon):
         gc.collect()
 
         # swap names
-        memory.atomic_swap_names(self._name, self._name + "-tmp")
+        memory.atomic_swap_names(self.name, self.name + "-tmp")
 
         # erase old data
-        memory.erase_named_memory(self._name + "-tmp")
+        memory.erase_named_memory(self.name + "-tmp")
 
         # open new data
-        memref = memory.open_named_memory(self._name)
+        memref = memory.open_named_memory(self.name)
         self._metadata_named_memory = memref
         self._value_named_memory = None
         self.view = memoryview(memref.buffer[HeaderSize:])

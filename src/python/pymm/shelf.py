@@ -17,6 +17,7 @@
 import pymmcore
 import pymm
 import gc
+import copy
 import sys
 import copy
 import numpy
@@ -24,10 +25,15 @@ import torch
 import weakref
 import numpy as np
 import torch
+import ctypes
 
 from .metadata import *
 from .memoryresource import MemoryResource
 from .check import methodcheck
+
+_decref = ctypes.pythonapi.Py_DecRef
+_decref.argtypes = [ctypes.py_object]
+_decref.restype = None
 
 # globals
 tx_vars = []
@@ -271,11 +277,22 @@ class shelf():
         return items
             
         
-    @methodcheck(types=[str])
-    def erase(self, name):
+    def erase(self, var):
         '''
         Erase and remove variable from the shelf
         '''
+        if isinstance(var,str):
+            name = var
+        elif isinstance(var, ShelvedCommon):
+            name = var.name
+            if name == None:
+                name = var.name_on_shelf # torch tensor special handling
+            _decref(var)
+            del var
+        else:
+            raise RuntimeError('bad erase parameter')
+
+        print("ERASING >", name , "<")
         # check the thing we are trying to erase is on the shelf
         if not name in self.__dict__:
             raise RuntimeError('attempting to erase something that is not on the shelf')
@@ -378,13 +395,18 @@ class shelf():
                 "pymm.bytes"]
 
 
-    def tx_begin(self):
+    def tx_begin_all(self):
         '''
-        Begin shelf-wide transaction. Currently new values created on the shelf are not included
+        Begin shelf-wide transaction. This transaction includes all
+        variables currently on the shelf.  Currently new values
+        created on the shelf during the transaction are not included
         as part of the transaction.
+
         '''        
         # iterate through shelf variables and set TXBIT_MULTIVAR
         global tx_vars
+        tx_vars = []
+        
         for varname in self.get_item_names(all=False):
 
             # get header info
@@ -397,7 +419,40 @@ class shelf():
             metadata_set_tx_bit(hdr, TXBIT_MULTIVAR)
             tx_vars.append(varname)
                     
-        return vars
+        return tx_vars
+
+    @methodcheck(types=[list])
+    def tx_begin(self, vars):
+        '''
+        Begin multi-variable transaction. This transaction includes
+        selected variables on the shelf.  New values created on the
+        shelf during the transaction are not included as part of the
+        transaction.
+
+        '''        
+        global tx_vars
+        tx_vars = []
+        
+        for var in vars:
+            
+            if isinstance(var,str):
+                varname = var
+            elif isinstance(var, ShelvedCommon):
+                varname = var.name
+            else:
+                raise RuntimeError('bad member in variable list')
+            
+            if self.__dict__[varname]._metadata_named_memory == None:
+                    raise RuntimeError('var {} has no metadata'.format(varname))
+
+            metadata_memory = self.__dict__[varname]._metadata_named_memory.buffer
+            
+            hdr = construct_header_from_buffer(metadata_memory)
+            metadata_set_tx_bit(hdr, TXBIT_MULTIVAR)
+            tx_vars.append(varname)
+
+        return tx_vars
+                
 
     def tx_end(self):
         '''

@@ -215,18 +215,18 @@ class shelved_torch_tensor(torch.Tensor, ShelvedCommon):
         if self is None:
             return
         if '_value_named_memory' in self.__dict__:
-            self._value_named_memory.tx_begin()
+            self._tx_begin()
             result = F(*args)
-            self._value_named_memory.tx_commit()            
+            self._tx_commit()            
         else:
             result = F(*args)
         return result
 
     def _tx_begin(self):
-        self._value_named_memory.tx_begin()
+        self._metadata_named_memory.tx_begin(self._value_named_memory)
 
     def _tx_commit(self):
-        self._value_named_memory.tx_commit()
+        self._metadata_named_memory.tx_commit(self._value_named_memory)
 
     # all methods that perform writes are implicitly used to define transaction
     # boundaries (at least most fine-grained)
