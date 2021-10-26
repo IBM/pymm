@@ -1,5 +1,5 @@
 # Code examples for published papers
-1. [Non-Volatile Memory Accelerated Posterior Estimation - HPEC2021](https://github.com/IBM/mcas/wiki/List-of-MCAS-publications)
+1. [Non-Volatile Memory Accelerated Posterior Estimation - HPEC2021](https://github.com/IBM/pymm/wiki/List-of-PyMM-publications)
 
 
 # Helpful commands for creating different configurations:
@@ -20,9 +20,9 @@ mkdir /mnt/pmem0/mystuff
 ## Optane-PM - App-Direct mode - dev-dax
 ``` bash
 sudo ndctl list
-sudo ndctl destroy-namespace namespace0.0 -f
+sudo ndctl destroy-namespace namespace1.0 -f
 sudo ndctl create-namespace -m devdax -e namespace1.0 --size 811748818944  --align 2M --force
-sudo chmod go+rw /dev/dax0.0
+sudo chmod go+rw /dev/dax1.0
 ```
 
 
