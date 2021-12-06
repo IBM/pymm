@@ -1,2 +1,0 @@
-# shell init
-import pymm
