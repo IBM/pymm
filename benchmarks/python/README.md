@@ -19,6 +19,24 @@ count = 150
 ```
 - Change the algorithm that processes the image: in the do_work file the default is processing the image using slic algorithm, you can add quickshift or run quickshift by itself. 
 ```
+is_slic = 1 # 1 for to run  slic
+is_quickshift = 0 # 1 for to run  quickshift
+```
+
+
+### 2: Word vectorization [NLP]
+This benchmark loads text corpus (set of documents).  Build bag-of-words and then build per-document feature vector. The benchmark uses sentiment analysis, text recognition, information retrieval.
+
+To change the running time:
+- Change the number of files that are processed. In the preparation file
+The default number of images is: 10000
+```
+count = 10000
+```
+
+
+
+
 
 
 
