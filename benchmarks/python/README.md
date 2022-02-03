@@ -12,15 +12,15 @@ In most of the benchmarks, there are two python scripts, the first is a preparat
 This benchmark performs image segmentation to create a new image. 
 In the preparation phase, it downloads 150 (default) images and processes them in the running phase.
 To change the running time:
-- Change the number of images that are processed. In the preparation file 
+- The first option is changing the number of images that are processedi in the preparation file. 
 The default number of images is: 150
 ```
 count = 150
 ```
-- Change the algorithm that processes the image: in the do_work file the default is processing the image using slic algorithm, you can add quickshift or run quickshift by itself. 
+- The second option is changing the algorithm that processes the image: in the do_work file the default is processing the image using slic algorithm, you can add quickshift or run quickshift by itself. 
 ```
-is_slic = 1 # 1 for to run  slic
-is_quickshift = 0 # 1 for to run  quickshift
+is_slic = 1 # '1' for runing slic algorithm [default]
+is_quickshift = 0 # '1' for running quickshift algorithm
 ```
 
 
@@ -33,6 +33,32 @@ The default number of images is: 10000
 ```
 count = 10000
 ```
+
+
+### 3: FFT [Signal Processing]
+This benchmark remove noise from audio file.
+In the preparation phase, it downloads audio file and add noise, in the running phase it removes the noise.
+
+
+### 4: Feature selection [Machine Learning] 
+This benchmark select the best features using OMP (Orthogonal Matching Pursuit) from a dataset. 
+For selecting the best featuers it use in: 
+- 4_1 - linear regreation algorithm.
+- 4_2 - logistic regreation algorithm.
+
+To change the running time:
+- The first option is changing the number of features selected in the do_work file.
+The default number of selected features are: 225 
+```
+count = 225
+```
+- The second option is changing the dataset size. The preparetion file is downloading different size of datasets, in the do_work you can load the size that you wish. 
+The default for 4_1  is 200MB.
+The default for 4_2  is 200MB.
+
+
+
+
 
 
 
