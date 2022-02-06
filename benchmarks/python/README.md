@@ -73,3 +73,23 @@ To change the running time:
 ```
 size = 1*GB
 ```
+
+### 8. Matrix Rotation
+
+### 9. Simple Directed graph algorithms (Coloring, Cycle) [Graph (Directed Graph)]
+
+### 10. Simple Undirected graph algorithms (Cloloring BFS/DFS, Triangels, Sourtest path) [Graph]
+
+### 11. Optimization [Signal Processing]
+
+### 12. Biclustering [Data Mining]
+
+### 13. Weighted Directed Graph (flow) [Graph]
+
+### 14. Weighted Undirected Graph (spanning tree) [Graph]
+
+### 15. K-Nearest-Neighbors [Machine Learning]
+
+### 16. Clustering algorithm (kmeans) [Machine Learning] 	
+
+
