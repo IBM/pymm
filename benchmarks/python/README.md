@@ -58,11 +58,18 @@ The default for 4_2  is 200MB.
 
 
 
+### 5 People recognition [Machine Learning]
+
+ 
+### 6 Image decomposition [Linear Algebra]
 
 
+### 7 Sorting 
+This benchmark sorts two ndarrays, one integer ndarray and one random ndarray. It uses two algorithms, quicksort and mergesort, to sort each ndarray.
+In the preparation phase it is random the two ndarray and in the do_work it sort each ndarray two times (quicksort and mergesort).
 
-
-
-
-
-
+To change the running time:
+- You can change the size of the ndarray. The default size is 1GB 
+```
+size = 1*GB
+```
