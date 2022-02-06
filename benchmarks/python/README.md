@@ -76,9 +76,9 @@ size = 1*GB
 
 ### 8. Matrix Rotation
 
-### 9. Simple Directed graph algorithms (Coloring, Cycle) [Graph (Directed Graph)]
+### 9. Simple Directed graph (Coloring, Cycle) [Graph]
 
-### 10. Simple Undirected graph algorithms (Cloloring BFS/DFS, Triangels, Sourtest path) [Graph]
+### 10. Simple Undirected graph (Cloloring, Triangels, Sourtest path) [Graph]
 
 ### 11. Optimization [Signal Processing]
 
