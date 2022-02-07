@@ -77,10 +77,14 @@ size = 1*GB
 ### 8. Matrix Rotation
 
 ### 9. Simple Directed graph (Cycle) [Graph]
+
 In this benchmark we count how many cycles are in a graph.
 In the preparation phase we generate a graph with the following parameters:
 nodes: 25K, edges: 62K
 In the do_work phase the benchmark counts the number of cycles that are in this graph.
+
+We use networkx repo to create the graph and use networkx implemention of the simple algorithms.
+
 To change the running time:
 - You can change the size of the graph, there are two parameters, number of nodes and edge probability.
 This is the default values
@@ -89,9 +93,34 @@ nodes = 25*1000
 edges_prob = 0.0001
 ```
 
+### 10. Simple Undirected graph (Coloring, Triangles, Shortest path) [Graph]
+
+In this benchmark we will run simple algorithms on undirected graphs.
+In the preparation phase we generate a graph
+In the do_work phase the benchmark counts the algorithm
+
+We use networkx repo to create the graph and use networkx implementation of the simple algorithms.
+
+##### 10.1
+Run greedy coloring algorithms with different basic strategies on the graph:
+
+The basic strategies are:
+# Basic strategies
+- largest_first
+- random_sequential
+- smallest_last
+- connected_sequential_bfs
+- connected_sequential_dfs
+
+To change the running time:
+- You can change the size of the graph, there are two parameters, number of nodes and edge probability.
+This is the default values in 10_1
+```
+nodes = 200*1000
+edges_prob = 0.0001
+```
 
 
-### 10. Simple Undirected graph (Cloloring, Triangels, Sourtest path) [Graph]
 
 ### 11. Optimization [Signal Processing]
 
