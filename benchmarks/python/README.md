@@ -86,7 +86,7 @@ To change the running time:
 This is the default values
 ```
 nodes = 25*1000
-edges_pob = 0.0001
+edges_prob = 0.0001
 ```
 
 
