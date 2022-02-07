@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 # coding: utf-8
-import networkx as nx
-import pickle
-# import graph
-import time
-
 '''
 Author: Moshik Hershcovitch <moshikh@il.ibm.com> 2022
-License: Apache, Version 2.0
+License: 3-clause BSD
 '''
+
+import networkx as nx
+import pickle
+import time
+
 nodes = 200*1000
 edges_prob = 0.0001
 seed = 1

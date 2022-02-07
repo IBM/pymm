@@ -7,8 +7,9 @@ import time
 
 '''
 Author: Moshik Hershcovitch <moshikh@il.ibm.com> 2022
-License: Apache, Version 2.0
+License: 3-clause BSD
 '''
+
 nodes = 5*1000
 edges_prob = 0.001
 seed = 1

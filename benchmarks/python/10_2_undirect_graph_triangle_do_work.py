@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+'''
+Author: Moshik Hershcovitch <moshikh@il.ibm.com> 2022
+License: 3-clause BSD
+'''
+
 import networkx as nx
 import time
 
