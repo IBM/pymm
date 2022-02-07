@@ -66,7 +66,7 @@ The default for 4_2  is 200MB.
 
 ### 7 Sorting [Basic Algorithm]
 This benchmark sorts two ndarrays, one integer ndarray and one random ndarray. It uses two algorithms, quicksort and mergesort, to sort each ndarray.
-In the preparation phase it is random the two ndarray and in the do_work it sort each ndarray two times (quicksort and mergesort).
+In the preparation phase its random the two ndarray and in the do_work it sort each ndarray two times (quicksort and mergesort).
 
 To change the running time:
 - You can change the size of the ndarray. The default size is 1GB 
@@ -87,7 +87,7 @@ We use networkx repo to create the graph and use networkx implemention of the si
 
 To change the running time:
 - You can change the size of the graph, there are two parameters, number of nodes and edge probability.
-This is the default values
+Here are the default values
 ```
 nodes = 25*1000
 edges_prob = 0.0001
@@ -101,11 +101,11 @@ In the do_work phase the benchmark counts the algorithm
 
 We use networkx repo to create the graph and use networkx implementation of the simple algorithms.
 
-##### 10.1
+#### 10.1
 Run greedy coloring algorithms with different basic strategies on the graph:
 
 The basic strategies are:
-# Basic strategies
+##### Basic strategies
 - largest_first
 - random_sequential
 - smallest_last
@@ -114,11 +114,35 @@ The basic strategies are:
 
 To change the running time:
 - You can change the size of the graph, there are two parameters, number of nodes and edge probability.
-This is the default values in 10_1
+Here are the default values in 10_1
 ```
 nodes = 200*1000
 edges_prob = 0.0001
 ```
+
+#### 10.2
+Count how triangels in the graph:
+
+To change the running time:
+- You can change the size of the graph, there are two parameters, number of nodes and edge probability.
+Here are the default values in 10_2
+```
+nodes = 250*1000
+edges_prob = 0.0001
+```
+
+#### 10.3
+Calculate the shortest path to all two consecutive nodes (according to their index in the graph):
+
+To change the running time:
+- You can change the size of the graph, there are two parameters, number of nodes and edge probability.
+Here are the default values in 10_3
+```
+nodes = 5*1000
+edges_prob = 0.001
+```
+
+
 
 
 
