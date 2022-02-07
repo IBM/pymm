@@ -80,7 +80,7 @@ In the preparation phase, we generate a graph with the following parameters:
 nodes: 25K, edges: 62K
 In the do_work phase, the benchmark counts the number of cycles in this graph.
 
-We use networkx repo to create the graph and use networkx implementation of the simple algorithms.
+We use networkx repo to create the graph and use networkx implementation of the algorithm.
 
 To change the running time:
 - You can change the size of the graph. There are two parameters, the number of nodes and edge probability.
@@ -92,11 +92,11 @@ edges_prob = 0.0001
 
 ### 10. Simple Undirected Graph (Coloring, Triangles, Shortest path) [Graph]
 
-In this benchmark, we will run simple algorithms on undirected graphs.
+In this benchmark, we run simple algorithms on undirected graphs.
 In the preparation phase, we generate a graph.
 In the do_work phase, the benchmark counts the algorithm.
 
-We use networkx repo to create the Graph and use networkx implementation of the simple algorithms.
+We use networkx repo to create the Graph and use networkx implementation of the algorithms.
 
 #### 10.1
 Run greedy coloring algorithms with different basic strategies on the Graph:
@@ -145,21 +145,40 @@ edges_prob = 0.001
 
 ### 13. Weighted Directed Graph (flow) [Graph]
 
+In this benchmark, we run flow algorithms on a weighted directed graph in this benchmark.
+In the preparation phase, we generate a graph.
+In the do_work phase, we run a few rounds of flow algorithms from different sources and destinations.
+
+We use networkx repo to create the Graph and use networkx implementation of the algorithm.
+
 To change the running time, you have two options:
 Change the number of rounds of the flow algorithms running from different nodes.
 In the do_work file, we have a variable for the number of rounds. The default value is:
 ```
-rounds = 50
-```
+rounds = 30
 
 - You can change the size of the graph. There are two parameters, the number of nodes and edge probability.
-Here are the default values in 10_3
+Here are the default values:
 ```
 nodes = 50*1000
 edges_prob = 0.0001
 ```
 
 ### 14. Weighted Undirected Graph (spanning tree) [Graph]
+
+In this benchmark, we run a spanning tree algorithm on a weighted undirected graph.
+In the preparation phase, we generate a graph.
+In the do_work phase, we run a spanning tree algorithm on the entire graph.
+
+We use networkx repo to create the Graph and use networkx implementation of the algorithm.
+
+To change the running time, you have two options:
+- You can change the size of the graph. There are two parameters, the number of nodes and edge probability.
+Here are the default values:
+```
+nodes = 300*1000
+edges_prob = 0.0001
+```
 
 ### 15. K-Nearest-Neighbors [Machine Learning]
 
