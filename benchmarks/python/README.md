@@ -8,7 +8,7 @@ In most of the benchmarks, there are two python scripts, the first is a preparat
 
 ## Benchmarks
 
-### 1: Segmentation [Image Processing]
+### 1. Segmentation [Image Processing]
 This benchmark performs image segmentation to create a new image. 
 In the preparation phase, it downloads 150 (default) images and processes them in the running phase.
 To change the running time:
@@ -24,7 +24,7 @@ is_quickshift = 0 # '1' for running quickshift algorithm
 ```
 
 
-### 2: Word vectorization [NLP]
+### 2. Word vectorization [NLP]
 This benchmark loads text corpus (set of documents).  Build bag-of-words and then build per-document feature vector. The benchmark uses sentiment analysis, text recognition, information retrieval.
 
 To change the running time:
@@ -35,12 +35,12 @@ count = 10000
 ```
 
 
-### 3: FFT [Signal Processing]
+### 3. FFT [Signal Processing]
 This benchmark remove noise from audio file.
 In the preparation phase, it downloads audio file and add noise, in the running phase it removes the noise.
 
 
-### 4: Feature selection [Machine Learning] 
+### 4. Feature selection [Machine Learning] 
 This benchmark select the best features using OMP (Orthogonal Matching Pursuit) from a dataset. 
 For selecting the best featuers it use in: 
 - 4_1 - linear regreation algorithm.
@@ -58,13 +58,13 @@ The default for 4_2  is 200MB.
 
 
 
-### 5 People recognition [Machine Learning]
+### 5. People recognition [Machine Learning]
 
  
-### 6 Image decomposition [Linear Algebra]
+### 6. Image decomposition [Linear Algebra]
 
 
-### 7 Sorting 
+### 7 Sorting [Basic Algorithm]
 This benchmark sorts two ndarrays, one integer ndarray and one random ndarray. It uses two algorithms, quicksort and mergesort, to sort each ndarray.
 In the preparation phase it is random the two ndarray and in the do_work it sort each ndarray two times (quicksort and mergesort).
 
@@ -76,7 +76,20 @@ size = 1*GB
 
 ### 8. Matrix Rotation
 
-### 9. Simple Directed graph (Coloring, Cycle) [Graph]
+### 9. Simple Directed graph (Cycle) [Graph]
+In this benchmark we count how many cycles are in a graph.
+In the preparation phase we generate a graph with the following parameters:
+nodes: 25K, edges: 62K
+In the do_work phase the benchmark counts the number of cycles that are in this graph.
+To change the running time:
+- You can change the size of the graph, there are two parameters, number of nodes and edge probability.
+This is the default values
+```
+nodes = 25*1000
+edges_pob = 0.0001
+```
+
+
 
 ### 10. Simple Undirected graph (Cloloring, Triangels, Sourtest path) [Graph]
 
