@@ -16,6 +16,7 @@
 #include "dax_manager.h"
 
 #include <common/byte_span.h>
+#include <common/env.h>
 #include <common/json.h>
 #include <common/string_view.h>
 #include <common/utils.h>
@@ -94,7 +95,7 @@ auto hstore_factory::create(
       , std::make_unique<dax_manager>(
           common::log_source(effective_debug_level)
           , dax_config_it == mc.end() ? json::array().str() : dax_config_it->second
-          , bool(std::getenv("DAX_RESET"))
+          , common::env_value("DAX_RESET", false)
           , common::make_byte_span(dax_base, dax_size)
         )
     );

@@ -15,6 +15,7 @@
 
 #include "hstore_config.h"
 
+#include <mutex>
 #include <shared_mutex>
 
 constexpr unsigned heap_rc_ephemeral::log_min_alignment;

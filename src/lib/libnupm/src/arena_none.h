@@ -23,7 +23,6 @@ struct arena_none
 	: arena
 {
 private:
-	constexpr static const char *_cname = "arena_none";
 #if _NUPM_FILESYSTEM_STD_
 	using path = std::filesystem::path;
 #else

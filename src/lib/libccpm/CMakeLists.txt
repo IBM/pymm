@@ -32,7 +32,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:-O0>")
 target_compile_options(${PROJECT_NAME}-static PUBLIC "$<$<CONFIG:Debug>:-O0>" "-fPIC")
 target_link_libraries(${PROJECT_NAME} dl)
 
-#add_subdirectory(unit_test)
+add_subdirectory(unit_test)
 
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
 install(TARGETS ${PROJECT_NAME}-static ARCHIVE DESTINATION lib)

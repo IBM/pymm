@@ -28,7 +28,6 @@ struct arena_dev
   : arena
 {
 private:
-  constexpr static const char *_cname = "arena_dev";
   std::string _path;
   gsl::not_null<nupm::DM_region_header *> _hdr;
 public:

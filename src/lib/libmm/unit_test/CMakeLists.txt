@@ -11,12 +11,7 @@ link_directories(${CMAKE_INSTALL_PREFIX}/lib64)
 
 add_compile_options(-g -fPIC -DCONFIG_DEBUG)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(GTEST_LIB gtest)
-else()
-  set(GTEST_LIB gtestd)
-endif()
-
+set(GTEST_LIB "gtest$<$<CONFIG:Debug>:d>")
 
 add_executable(${PROJECT_NAME} test1.cpp)
 

@@ -22,10 +22,13 @@
 #include <common/str_utils.h>
 #include <api/components.h>
 #include <api/kvstore_itf.h>
+#include <cstdlib> /* getenv */
 
 #define ASSERT_OK(X) ASSERT_TRUE(S_OK == X)
 
 using namespace component;
+
+const char numa_nodes_key[] = "NUMA_NODES";
 
 static component::IKVStore::pool_t pool;
 
@@ -34,7 +37,9 @@ namespace {
 // The fixture for testing class Foo.
 class KVStore_test : public ::testing::Test {
 
+  static bool numa_notified;
  protected:
+  static const char *numa_nodes;
 
   // If the constructor and destructor are not enough for setting up
   // and cleaning up each test, you can define the following methods:
@@ -50,20 +55,35 @@ class KVStore_test : public ::testing::Test {
       ASSERT_TRUE(comp);
       auto fact = make_itf_ref(static_cast<IKVStore_factory *>(comp->query_interface(IKVStore_factory::iid())));
 
-      _kvstore = fact->create(0, {});
+      if ( numa_nodes )
+      {
+        _kvstore.reset(fact->create(0, {{+component::IKVStore_factory::k_numa_nodes, numa_nodes}}));
+      }
+      else
+      {
+        if ( ! numa_notified )
+        {
+          std::cerr << "Using mmap memory. Run with " << numa_nodes_key << "=<numa_nodes> to allocate from numa nodes\n";
+          numa_notified = true;
+        }
+        _kvstore.reset(fact->create(0, {}));
+      }
     }
   }
 
   virtual void TearDown() {
     // Code here will be called immediately after each test (right
     // before the destructor).
+    _kvstore.reset();
   }
 
   // Objects declared here can be used by all tests in the test case
-  static component::IKVStore * _kvstore;
+  static std::unique_ptr<component::IKVStore> _kvstore;
 };
 
-component::IKVStore * KVStore_test::_kvstore;
+const char *KVStore_test::numa_nodes = ::getenv(numa_nodes_key);
+bool KVStore_test::numa_notified = false;
+std::unique_ptr<component::IKVStore> KVStore_test::_kvstore;
 
 
 //TEST_F(KVStore_test, Instantiate)
@@ -78,7 +98,6 @@ TEST_F(KVStore_test, OpenPool)
 
   ASSERT_TRUE(pool != component::IKVStore::POOL_ERROR);
 }
-
 
 TEST_F(KVStore_test, BasicPut)
 {
@@ -104,6 +123,7 @@ TEST_F(KVStore_test, BasicGet)
 
   ASSERT_TRUE(value);
   ASSERT_TRUE(value_len == KB(8));
+  _kvstore->free_memory(value);
 
   value = nullptr;
   value_len = 0;
@@ -114,6 +134,7 @@ TEST_F(KVStore_test, BasicGet)
   ASSERT_TRUE(count == 2);
   ASSERT_TRUE(value);
   ASSERT_TRUE(value_len == KB(8));
+  _kvstore->free_memory(value);
 }
 
 TEST_F(KVStore_test, BasicMap)
@@ -352,7 +373,7 @@ TEST_F(KVStore_test, KeySwap)
 
   ASSERT_OK(_kvstore->swap_keys(pool, left_key, right_key));
 
-  iovec new_left, new_right;
+  iovec new_left{}, new_right{};
   _kvstore->get(pool, left_key, new_left.iov_base, new_left.iov_len);
   _kvstore->get(pool, right_key, new_right.iov_base, new_right.iov_len);
 
@@ -360,6 +381,8 @@ TEST_F(KVStore_test, KeySwap)
   PLOG("right: %.*s", int(new_right.iov_len), static_cast<const char *>(new_right.iov_base));
   ASSERT_TRUE(strncmp(static_cast<const char *>(new_left.iov_base), right_value.c_str(), new_left.iov_len) == 0);
   ASSERT_TRUE(strncmp(static_cast<const char *>(new_right.iov_base), left_value.c_str(), new_right.iov_len) == 0);
+  _kvstore->free_memory(new_right.iov_base);
+  _kvstore->free_memory(new_left.iov_base);
   
   ASSERT_TRUE(_kvstore->close_pool(pool) == S_OK);
 }
@@ -388,6 +411,29 @@ TEST_F(KVStore_test, AlignedLock)
   ASSERT_TRUE(_kvstore->close_pool(pool) == S_OK);
 }
 
+TEST_F(KVStore_test, NumaMask)
+{
+	ASSERT_TRUE(_kvstore);
+	pool = _kvstore->create_pool("numaMask", MB(1));
+	ASSERT_TRUE(pool != IKVStore::POOL_ERROR);
+
+	if ( numa_nodes && strlen(numa_nodes) )
+	{
+		std::vector<uint64_t> numa_mask_result;
+		_kvstore->get_attribute(pool, component::IKVStore::NUMA_MASK, numa_mask_result);
+		ASSERT_EQ(1, numa_mask_result.size());
+		auto numa_mask = numa_mask_result[0];
+		/* a trivial mask (1 node, less than 3 chars) should yield exactly one 1 bit */
+		if ( strlen(numa_nodes) < 3 )
+        {
+			ASSERT_NE(0, numa_mask);
+			ASSERT_EQ(0, (numa_mask & (numa_mask-1)));
+		}
+		std::cout << "Numa node mask is " << std::hex << numa_mask << "\n";
+	}
+	_kvstore->close_pool(pool);
+	_kvstore->delete_pool("numaMask");
+}
 } // namespace
 
 int main(int argc, char **argv) {

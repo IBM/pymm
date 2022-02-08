@@ -16,8 +16,10 @@
 
 #include <api/components.h>
 #include <api/registrar_memory_direct.h>
+#include <common/byte.h>
 #include <common/byte_span.h>
 #include <common/errors.h> /* ERROR_BASE */
+#include <common/string_view.h>
 #include <common/time.h>
 #include <gsl/span>
 #include <sys/uio.h> /* iovec */
@@ -71,6 +73,14 @@ protected:
   using key_t           = Opaque_key*;
   using pool_lock_t     = Opaque_lock_handle*;
   using pool_iterator_t = Opaque_pool_iterator*;
+  using byte            = common::byte;
+
+ template <typename C>
+    using basic_string_view = common::basic_string_view<C>;
+  using string_view = common::string_view;
+  using string_view_byte = basic_string_view<byte>;
+  using string_view_key = string_view_byte;
+  using string_view_value = string_view_byte;
 
   static constexpr memory_handle_t HANDLE_NONE = nullptr; /* old name */
   static constexpr memory_handle_t MEMORY_HANDLE_NONE = nullptr; /* better name */
@@ -91,13 +101,13 @@ protected:
   };
 
   using flags_t = std::uint32_t ;
-  static constexpr flags_t FLAGS_NONE      = 0x0;
-  static constexpr flags_t FLAGS_READ_ONLY = 0x1; /* lock read-only */
-  static constexpr flags_t FLAGS_SET_SIZE    = 0x2;
-  static constexpr flags_t FLAGS_CREATE_ONLY = 0x4;  /* only succeed if no existing k-v pair exist */
-  static constexpr flags_t FLAGS_DONT_STOMP  = 0x8;  /* do not overwrite existing k-v pair */
-  static constexpr flags_t FLAGS_NO_RESIZE   = 0x10; /* if size < existing size, do not resize */
-  static constexpr flags_t FLAGS_MAX_VALUE   = 0x10;
+  static constexpr flags_t FLAGS_NONE          = 0x0;
+  static constexpr flags_t FLAGS_READ_ONLY     = 0x1; /* lock read-only */
+  static constexpr flags_t FLAGS_SET_SIZE      = 0x2;
+  static constexpr flags_t FLAGS_CREATE_ONLY   = 0x4;  /* only succeed if no existing k-v pair exist */
+  static constexpr flags_t FLAGS_DONT_STOMP    = 0x8;  /* do not overwrite existing k-v pair */
+  static constexpr flags_t FLAGS_NO_RESIZE     = 0x10; /* if size < existing size, do not resize */
+  static constexpr flags_t FLAGS_MAX_VALUE     = 0x10;
 
   using unlock_flags_t = std::uint32_t;
   static constexpr unlock_flags_t UNLOCK_FLAGS_NONE = 0x0;
@@ -130,6 +140,7 @@ protected:
                                      written or locked with STORE_LOCK_WRITE */
     MEMORY_TYPE              = 7, /* type of memory */
     MEMORY_SIZE              = 8, /* size of pool or store in bytes */
+    NUMA_MASK                = 9, /* mask of first 64 numa nodes eligible for mapstore allocation */
   };
 
   enum {
@@ -435,7 +446,7 @@ protected:
    * @param new_size New size of value in bytes (can be more or less)
    *
    * @return S_OK on success, E_BAD_ALIGNMENT, E_POOL_NOT_FOUND,
-   * E_KEY_NOT_FOUND, E_TOO_LARGE, E_ALREADY
+   * E_KEY_NOT_FOUND, E_TOO_LARGE, E_ALREADY(?)
    */
   virtual status_t resize_value(const pool_t       pool,
                                 const std::string& key,
@@ -470,7 +481,7 @@ protected:
    * @param handle Memory registration handle
    *
    * @return S_OK, S_MORE if only a portion of value is read,
-   * E_BAD_ALIGNMENT on invalid alignment, E_POOL_NOT_FOUND, or other
+   * E_BAD_ALIGNMENT on invalid alignment, E_POOL_NOT_FOUND, E_KEY_NOT_FOUND, or other
    * error code
    *
    * Note: S_MORE is reduncant, it could have been inferred from S_OK and
@@ -603,7 +614,7 @@ protected:
    * @param type STORE_LOCK_READ | STORE_LOCK_WRITE
    * @param out_value [out] Pointer to data
    * @param inout_value_len [in-out] Size of data in bytes
-   * @param alignment [in] Alignment in bytes.
+   * @param alignment [in] Alignment of new value space in bytes.
    * @param out_key [out]  Handle to key for unlock
    * @param out_key_ptr [out]  Optional request for key-string pointer (set to
    * nullptr if not required)
@@ -788,7 +799,7 @@ protected:
    * @param increment Move iterator forward one position
    *
    * @return S_OK on success and valid reference, E_INVAL (bad iterator),
-   *   E_OUT_OF_BOUNDS (when attempting to dereference out of bounds
+   *   E_OUT_OF_BOUNDS (when attempting to dereference out of bounds)
    *   E_ITERATOR_DISTURBED (when writes have been made since last iteration)
    */
   virtual status_t deref_pool_iterator(const pool_t       pool,

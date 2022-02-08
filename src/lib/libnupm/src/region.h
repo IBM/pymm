@@ -51,7 +51,7 @@ class Region : private common::log_source {
   Region &operator=(const Region &) = delete;
 
   using list_t = std::forward_list<void *>;
-  using set_t =  std::set<void *, std::less<void *>>;
+  using set_t = std::set<void *>;
 
   void mark_used(void *p) {
 #if SANITY_CHECK

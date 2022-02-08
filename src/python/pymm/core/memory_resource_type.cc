@@ -688,7 +688,7 @@ static PyObject * MemoryResource_persist_memory_view(MemoryResource *self, PyObj
 
   Py_buffer * pybuffer = PyMemoryView_GET_BUFFER(mview);
 
-  PLOG("persisting memory @%p", pybuffer->buf);
+  //PLOG("persisting memory @%p", pybuffer->buf);
 
   pmem_persist(pybuffer->buf, pybuffer->len); /* part of libpmem */
   

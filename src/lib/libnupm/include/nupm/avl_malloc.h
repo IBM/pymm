@@ -110,7 +110,7 @@ public:
    *
    * @return Start address
    */
-  addr_t addr() { return _addr; }
+  addr_t addr() const { return _addr; }
 
   /**
    * Get start pointer of the region
@@ -118,7 +118,7 @@ public:
    *
    * @return Start address
    */
-  void* paddr() { return reinterpret_cast<void*>(_addr); }
+  void* paddr() const { return reinterpret_cast<void*>(_addr); }
 
 
   /**
@@ -145,7 +145,7 @@ private:
    *
    * @return
    */
-  bool higher(AVL_node<Memory_region>* n) {
+  bool higher(AVL_node<Memory_region>* n) override {
     return (_addr > (static_cast<Memory_region*>(n))->_addr);
   }
 
@@ -155,7 +155,7 @@ private:
    *
    * @return
    */
-  Memory_region* left() {
+  Memory_region* left() const {
     return static_cast<Memory_region*>(&*subtree[core::LEFT]);
   }
 
@@ -165,7 +165,7 @@ private:
    *
    * @return
    */
-  Memory_region* right() {
+  Memory_region* right() const {
     return static_cast<Memory_region*>(&*subtree[core::RIGHT]);
   }
 
@@ -199,7 +199,7 @@ protected:
         if (r) stack.push_back(r);
       }
     }
-    
+
     return nullptr;
   }
 
@@ -216,7 +216,7 @@ protected:
    */
   Memory_region* find_free_region(Memory_region* node,
                                   size_t size,
-                                  size_t alignment = 0)
+                                  size_t alignment = 0) const
   {
     if (node == nullptr) return nullptr;
 
@@ -225,7 +225,7 @@ protected:
 
     while (!stack.empty()) {
       node = stack.pop();
-      
+
       if (node->_size >= size && node->_free) {
         if (alignment > 0) {
           /* see if can meet the alignment needs */
@@ -259,8 +259,8 @@ protected:
    *
    * @return nullptr if not found, otherwise containing region
    */
-  Memory_region* find_containing_region(Memory_region* node, addr_t addr) {
-    
+  Memory_region* find_containing_region(Memory_region* node, addr_t addr) const {
+
     if (node == nullptr) return nullptr;
 
     common::Fixed_stack<Memory_region*> stack;  // good for debugging
@@ -283,6 +283,14 @@ protected:
     }
 
     return nullptr; /* not found */
+  }
+
+  void insert_after(Memory_region* old)
+  {
+    _prev = old;
+    _next = old->_next;
+    old->_next = this;
+    if ( _next ) { _next->_prev = this; }
   }
 
 } __attribute__((packed));
@@ -380,9 +388,9 @@ public:
       }
     }
 
-  addr_t base() {
+  addr_t base() const {
     /* update base */
-    Memory_region* leftmost = leftmost_region();
+    const Memory_region* leftmost = leftmost_region();
     assert(leftmost);
     return leftmost->addr();
   }
@@ -407,6 +415,25 @@ public:
   }
 
   /**
+   * Sanity check for doubly-linked region list
+   *
+   * Invoke with assert(list_is_consistent()) to suppress code generation when -DNDEBUG
+   *
+   *
+   * @return true
+   */
+  bool list_is_consistent() const
+  {
+    auto region = leftmost_region();
+    assert(region->_prev == nullptr);
+    for ( ; region->_next; region = region->_next )
+    {
+      assert(region->_next->_prev == region);
+    }
+    return true;
+  }
+
+  /**
    * Allocate a region of memory
    *
    * @param size Size in bytes of region to allocate
@@ -427,7 +454,8 @@ public:
       Memory_region* aligned_region = root->find_free_region(root, size, alignment);
 
       if (aligned_region) {
-        
+
+        assert(list_is_consistent());
         assert(aligned_region->_size >= size);
         assert(check_aligned(aligned_region->_addr, alignment));
 
@@ -436,31 +464,25 @@ public:
           aligned_region->_free = false;
         }
         else {
-          /* alignment is OK but its not an exact fit, so we'll create a remaining region on the right  */          
+          /* alignment is OK but its not an exact fit, so we'll create a remaining region on the right  */
           size_t right_remaining_size = aligned_region->_size - size;
           Memory_region* right_remaining = new (_slab.alloc()) Memory_region(aligned_region->_addr + size, right_remaining_size);
-
-          auto r_adjacent = aligned_region->_next;
 
           // aligned_region->_addr remains same
           aligned_region->_size = size;
           aligned_region->_free = false;
-          aligned_region->_next = right_remaining;
-          // aligned_region->_prev remains same
-          
-          right_remaining->_prev = aligned_region;
-          right_remaining->_next = r_adjacent;
-          if(r_adjacent)
-            r_adjacent->_prev = right_remaining;
-          right_remaining->_size = right_remaining_size;
+
+          right_remaining->insert_after(aligned_region);
           right_remaining->_free = true;
           _tree->insert_node(right_remaining);
         }
 
+        assert(list_is_consistent());
         return aligned_region;
       }
       else {
-        
+
+        assert(list_is_consistent());
         /* OK, maybe there still is space, but alignment isn't there.  Now we need
            to three-way split a large enough block */
         assert(alignment > 0);
@@ -474,9 +496,9 @@ public:
         if (option_DEBUG) {
           PLOG("Region to split: %lx-%lx size=%lu (requested size=%lu, requested alignment = %lu, free=%d)",
                region->_addr, region->_addr + region->_size, region->_size, size, alignment, region->_free);
-          
+
           assert(region->_addr % alignment);
-          
+
           PLOG("%lx rounded up %lx", region->_addr, round_up(region->_addr, alignment));
           assert(region->_addr % alignment);
         }
@@ -539,6 +561,7 @@ public:
           assert(check_aligned(aligned_region->_addr, alignment));
         }
 
+        assert(list_is_consistent());
       }
 
 #ifdef DEBUG_AVL_ALLOCATOR
@@ -565,7 +588,7 @@ public:
    *
    * @return Leftmost memory region
    */
-  Memory_region* leftmost_region() {
+  Memory_region* leftmost_region() const {
     assert(_tree);
     Memory_region* r = static_cast<Memory_region*>(&**(_tree->root()));
     if (r == nullptr)
@@ -581,7 +604,7 @@ public:
    *
    * @return Rightmost memory region (give top end of region)
    */
-  Memory_region* rightmost_region() {
+  Memory_region* rightmost_region() const {
     Memory_region* r = static_cast<Memory_region*>(&**(_tree->root()));
     while (r->right()) r = r->right();
     return r;
@@ -601,6 +624,7 @@ public:
     Memory_region* root = static_cast<Memory_region*>(&**(_tree->root()));
     Memory_region* region = root->find_containing_region(root, addr);
 
+    assert(list_is_consistent());
     if (region == nullptr)
       throw API_exception("alloc_at: cannot find containing region (addr=%lx, size=%ld)",
                           addr, size);
@@ -628,10 +652,7 @@ public:
       middle = new (_slab.alloc()) Memory_region(addr, region->_size - left_size);
 
       region->_size = left_size;  // make the containing region left chunk
-      middle->_next = region->_next;
-      middle->_prev = region;
-      region->_next = middle;
-      // region previous stays the same
+      middle->insert_after(region);
       _tree->insert_node(middle);
 
     }
@@ -652,14 +673,12 @@ public:
 
       Memory_region* right = new (p) Memory_region(middle->_addr + size, right_size);
 
-      right->_size = right_size;
-      right->_next = middle->_next;
-      right->_prev = middle;
-      middle->_next = right;
       middle->_size = size;  // shrink middle chunk
+      right->insert_after(middle);
       _tree->insert_node(right);
     }
 
+    assert(list_is_consistent());
     return middle;
   }
 
@@ -716,6 +735,7 @@ public:
     size_t return_count = region->_size;
     region->_free = true;
 
+    assert(list_is_consistent());
     // right coalesce
     {
       Memory_region* right = region->_next;
@@ -744,6 +764,7 @@ public:
       }
     }
 
+    assert(list_is_consistent());
     return return_count;
   }
 
@@ -946,8 +967,8 @@ public:
    *
    * @return Upper limit in bytes
    */
-  size_t used_zone_limit() {
-    Memory_region* r = _range_allocator.rightmost_region();
+  size_t used_zone_limit() const {
+    const Memory_region* r = _range_allocator.rightmost_region();
 
     if (r->is_free())
       return r->addr() - _range_allocator.base();

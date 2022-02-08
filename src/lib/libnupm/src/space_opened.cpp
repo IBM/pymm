@@ -31,8 +31,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#define DEBUG_PREFIX "dax_manager: "
-
 static constexpr unsigned MAP_LOG_GRAIN = 21U;
 static constexpr std::size_t MAP_GRAIN = std::size_t(1) << MAP_LOG_GRAIN;
 static constexpr int MAP_HUGE = MAP_LOG_GRAIN << MAP_HUGE_SHIFT;
@@ -53,11 +51,6 @@ namespace fs = std::experimental::filesystem;
 
 std::vector<common::memory_mapped> nupm::range_use::address_coverage_check(std::vector<common::memory_mapped> &&iovm_)
 {
-
-  /* MCAS-86: we don't want this restriction, because different processes could be
-     using the same virtual load address. */
-
-#ifdef TEMPORARY_FIX
 	using AC = boost::icl::interval_set<byte *>;
 	AC this_coverage;
 	for ( const auto &e : iovm_ )
@@ -65,29 +58,22 @@ std::vector<common::memory_mapped> nupm::range_use::address_coverage_check(std::
 		auto i = boost::icl::interval<byte *>::right_open(::data(e), ::data_end(e));
 		if ( intersects(_dm->_address_coverage, i) )
 		{
-			std::ostringstream o;
-			o << "range " << ::base(e) << ".." << ::end(e) << " overlaps existing mapped storage";
-			PLOG("%s: %s", __func__, o.str().c_str());
-			throw std::runtime_error(o.str().c_str());
+			auto er = common::format("range {}..{} overlaps existing mapped storage", ::base(e), ::end(e));
+			FLOGM("{}", er);
+			throw std::runtime_error(er);
 		}
 		this_coverage.insert(i);
 	}
 	_dm->_address_coverage += this_coverage;
 	_dm->_address_fs_available -= this_coverage;
-#endif
 
 	return std::move(iovm_);
 }
 
 nupm::range_use::range_use(dax_manager *dm_, std::vector<common::memory_mapped> &&iovm_)
   : _dm(dm_)
-#if 1
-  , _iovm(address_coverage_check(std::move(iovm_))) // std::vector<common::memory_mapped>())
-#else
-  , _iovm()
-#endif
+  , _iovm(address_coverage_check(std::move(iovm_)))
 {
-	grow(std::move(iovm_));
 }
 
 nupm::range_use::~range_use()
@@ -167,11 +153,11 @@ std::vector<common::memory_mapped> nupm::space_opened::map_dev(int fd, const add
     }
     else
     {
-      throw General_exception("dax_map excpects a regular file or a char device; file %s is neither");
+      throw General_exception("dax_map excpects a regular file or a char device; fd %i is neither", fd);
     }
   }
 
-  PLOG(DEBUG_PREFIX "fd %i size=%lu", fd, len);
+  FLOGM("fd {} size{}", fd, len);
 
   /* mmap it in */
   common::memory_mapped iovm(
@@ -180,7 +166,7 @@ std::vector<common::memory_mapped> nupm::space_opened::map_dev(int fd, const add
     , MAP_SHARED_VALIDATE | MAP_FIXED | MAP_SYNC | MAP_HUGE | dax_manager::effective_map_locked
     , fd
   );
-  CPLOG(1, "%s: %p = mmap(%p, 0x%zx, %s", __func__, ::base(iovm), base_ptr, ::size(iovm), dax_manager::effective_map_locked ? "MAP_SYNC|locked" : "MAP_SYNC|not locked");
+  CFLOGM(1, "{} = mmap({}, 0x{:x}, {}", ::base(iovm), base_ptr, ::size(iovm), dax_manager::effective_map_locked ? "MAP_SYNC|locked" : "MAP_SYNC|not locked");
 
   if ( ! iovm ) {
     iovm =
@@ -191,7 +177,7 @@ std::vector<common::memory_mapped> nupm::space_opened::map_dev(int fd, const add
         , fd
       );
 
-    CPLOG(1, "%s: %p = mmap(%p, 0x%zx, %s", __func__, ::base(iovm), base_ptr, ::size(iovm), dax_manager::effective_map_locked ? "locked" : "not locked");
+    CFLOGM(1, "{} = mmap({}, 0x{:x}, {}", ::base(iovm), base_ptr, ::size(iovm), dax_manager::effective_map_locked ? "locked" : "not locked");
   }
 
   if ( ! iovm ) {
@@ -234,7 +220,7 @@ try
 catch ( std::exception &e )
 {
 	/* ERROR: should catch and report above, not here, as the name is gone by this time */
-	PLOG("%s: fd %i exception %s", __func__, _fd_locked.fd(), e.what());
+	FLOGM("fd {} exception {}", _fd_locked.fd(), e.what());
 	throw;
 }
 
@@ -254,7 +240,7 @@ try
 catch ( std::exception &e )
 {
 	/* ERROR: should catch and report above, not here, as the name is gone by this time */
-	PLOG("%s: fd %i exception %s", __func__, _fd_locked.fd(), e.what());
+	FLOGM("fd {} exception {}", __func__, _fd_locked.fd(), e.what());
 	throw;
 }
 
@@ -265,7 +251,7 @@ try
 }
 catch ( std::exception &e )
 {
-	PLOG("%s: exception %s", __func__, e.what());
+	FLOGM("exception {}", __func__, e.what());
 	throw;
 }
 

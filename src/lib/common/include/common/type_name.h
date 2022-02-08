@@ -8,7 +8,7 @@
 
 #define type_of(X) type_name<decltype(X)>(X)
 
-std::string demangle(const char* name) {
+inline std::string demangle(const char* name) {
 
   int status = -4; // some arbitrary value to eliminate the compiler warning
 

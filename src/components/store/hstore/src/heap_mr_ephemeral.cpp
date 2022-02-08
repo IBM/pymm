@@ -16,8 +16,10 @@
 #include "hstore_config.h"
 #include "heap_mr_shim.h"
 #include "mm_plugin_itf.h"
+
 #include <common/errors.h> /* S_OK, E_INVAL */
 #include <memory> /* make_unique */
+#include <mutex>
 #include <shared_mutex> /* shared_lock, unique_lock */
 
 constexpr unsigned heap_mr_ephemeral::log_min_alignment;

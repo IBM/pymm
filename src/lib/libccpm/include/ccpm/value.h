@@ -1,6 +1,7 @@
 #ifndef __CCPM_VALUE_H__
 #define __CCPM_VALUE_H__
 
+#include <libpmem.h> /* pmem_memset */
 #include <common/cycles.h>
 #include <common/utils.h>
 

@@ -23,24 +23,26 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include)
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 link_directories(${CMAKE_INSTALL_PREFIX}/lib64)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(GTEST_LIB gtest)
-else()
-  set(GTEST_LIB gtestd)
-endif()
+set(GTEST_LIB "gtest$<$<CONFIG:Debug>:d>")
 
 add_executable(hstore-test1 test1.cpp store_map.cpp)
 target_link_libraries(hstore-test1 ${ASAN_LIB} common numa ${GTEST_LIB} pthread dl)
+
 add_executable(hstore-test1s test1s.cpp store_map.cpp)
 target_link_libraries(hstore-test1s ${ASAN_LIB} common numa ${GTEST_LIB} pthread dl)
+
 add_executable(hstore-test2 test2.cpp store_map.cpp)
 target_link_libraries(hstore-test2 ${ASAN_LIB} common numa ${GTEST_LIB} pthread dl)
+
 add_executable(hstore-test2y test2.cpp store_map.cpp)
 target_compile_definitions(hstore-test2y PRIVATE MAKE_SYNDROME_REPORT=1)
 target_link_libraries(hstore-test2y ${ASAN_LIB} common numa ${GTEST_LIB} pthread dl)
+
 add_executable(hstore-test3 test3.cpp store_map.cpp)
 target_link_libraries(hstore-test3 ${ASAN_LIB} common numa ${GTEST_LIB} pthread dl ${PROFILER})
+
 add_executable(hstore-test4 test4.cpp store_map.cpp)
 target_link_libraries(hstore-test4 ${ASAN_LIB} common numa ${GTEST_LIB} pthread dl ${PROFILER})
+
 add_executable(hstore-testmt testmt.cpp store_map.cpp)
 target_link_libraries(hstore-testmt ${ASAN_LIB} common numa ${GTEST_LIB} pthread dl ${PROFILER})

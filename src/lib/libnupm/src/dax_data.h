@@ -15,7 +15,7 @@
 #ifndef __NUPM_DAX_DATA_H__
 #define __NUPM_DAX_DATA_H__
 
-#include <libpmem.h>
+#include <libpmem.h> /* pmem_memset */
 #include <city.h> /* CityHash */
 #include <common/pointer_cast.h>
 #include <common/string_view.h>
@@ -253,6 +253,11 @@ class DM_region_header {
     const auto regions = region_table_span();
     for (auto & reg : regions ) {
       if (reg.region_id == region_id) {
+        auto rp = arena_base() + grain_to_bytes(reg.offset_grain);
+#if 0
+        CFLOGM(0, "CLEAR ({}.{:x}", static_cast<const void *>(rp), grain_to_bytes(reg.length_grain));
+#endif
+        pmem_memset_persist(rp, 0, grain_to_bytes(reg.length_grain));
         reg.region_id = 0; /* power-fail atomic */
         pmem_flush(&reg.region_id, sizeof(reg.region_id));
         return;
@@ -271,48 +276,49 @@ class DM_region_header {
         throw std::bad_alloc();
     }
 
-    bool found = false;
-    for (DM_region & reg : regions)
+    auto reg =
+      std::find_if(
+        regions.begin(), regions.end()
+         , [size_in_grain] (const auto &r) -> bool { return r.region_id == 0 && r.length_grain == size_in_grain; }
+      );
+    /* If we have found an exact size free region */
+    if ( reg != regions.end() )
     {
-      /* If we have found a sufficiently large free region */
-      if (reg.region_id == 0 && reg.length_grain >= size_in_grain) {
-        if (reg.length_grain == size_in_grain) {
-          /* exact match */
-          void *rp = arena_base() + grain_to_bytes(reg.offset_grain);
-          /* write file name to region */
-          pmem_memcpy_persist(reg.file_name, name_.begin(), name_.size());
-          pmem_memcpy_persist(&reg.file_name[name_.size()], "\0", 1);
-          // claim region
-          tx_atomic_write(&reg, region_id);
-          return rp;
-        }
-        else {
-          /* cut out */
-          const uint32_t new_offset = reg.offset_grain;
-
-          const auto changed_length = reg.length_grain - size_in_grain;
-          const auto changed_offset = reg.offset_grain + size_in_grain;
-
-	  /* reg_n is the new region for unallocated space */
-          auto reg_n = std::find_if(regions.begin(), regions.end(), [] (const DM_region &r) { return r.region_id == 0 && r.length_grain == 0; });
-          if ( reg_n != regions.end() )
-          {
-            void *rp = arena_base() + grain_to_bytes(new_offset);
-            /* write file name to region */
-            pmem_memcpy_persist(reg.file_name, name_.begin(), name_.size());
-            pmem_memcpy_persist(&reg.file_name[name_.size()], "\0", 1);
-            // claim region
-            tx_atomic_write(&*reg_n, boost::numeric_cast<uint16_t>(changed_offset), boost::numeric_cast<uint16_t>(changed_length), &reg,
-                            new_offset, size_in_grain, region_id);
-            return rp;
-          }
-        }
-      }
+      void *rp = arena_base() + grain_to_bytes(reg->offset_grain);
+      /* write file name to region */
+      pmem_memcpy_persist(reg->file_name, name_.begin(), name_.size());
+      pmem_memcpy_persist(&reg->file_name[name_.size()], "\0", 1);
+      // claim region
+      tx_atomic_write(&*reg, region_id);
+      return rp;
     }
-    if (!found)
-      throw General_exception("no more regions (size in grain=%u)", size_in_grain);
 
-    throw General_exception("no spare slots");
+    reg =
+      std::find_if(
+        regions.begin(), regions.end()
+        , [size_in_grain] (const auto &r) -> bool { return r.region_id == 0 && size_in_grain < r.length_grain; }
+      );
+    if ( reg != regions.end() )
+    {
+      /* cut out */
+      const uint32_t new_offset = reg->offset_grain;
+
+      const auto changed_length = reg->length_grain - size_in_grain;
+      const auto changed_offset = reg->offset_grain + size_in_grain;
+
+      /* reg_n is the new region for unallocated space */
+      auto reg_n = std::find_if(regions.begin(), regions.end(), [] (const DM_region &r) { return r.region_id == 0 && r.length_grain == 0; });
+      if ( reg_n == regions.end() ) throw General_exception("no spare slots");
+      void *rp = arena_base() + grain_to_bytes(new_offset);
+      /* write file name to region */
+      pmem_memcpy_persist(reg->file_name, name_.begin(), name_.size());
+      pmem_memcpy_persist(&reg->file_name[name_.size()], "\0", 1);
+      // claim region
+      tx_atomic_write(&*reg_n, boost::numeric_cast<uint16_t>(changed_offset), boost::numeric_cast<uint16_t>(changed_length), &*reg,
+                      new_offset, size_in_grain, region_id);
+      return rp;
+    }
+    throw General_exception("no more regions (size in grain=%u)", size_in_grain);
   }
 
   size_t get_max_available() const

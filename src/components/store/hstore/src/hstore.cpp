@@ -28,10 +28,12 @@
 
 #include <common/errors.h>
 #include <common/exceptions.h>
+#include <common/logging.h> /* format */
 #include <common/perf/tm.h>
 #include <common/utils.h>
 
 #include <city.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cerrno>
@@ -78,9 +80,7 @@ auto hstore::move_pool(const pool_t p) -> std::shared_ptr<open_pool_type>
   auto ps = _pools.find(v);
   if ( ps == _pools.end() )
   {
-    std::ostringstream o;
-    o << "invalid pool identifier " << v;
-    throw std::invalid_argument(o.str());
+    throw std::runtime_error(common::format("invalid pool identifier {}", v));
   }
 
   tls_cache.erase(v);
@@ -155,8 +155,8 @@ try
   }
   catch ( const std::exception &e )
   {
-    CPLOG(0, "%s: %s", __func__, e.what());
-    return pool_t(E_FAIL);
+    PLOG("%s: %s", __func__, e.what());
+    return pool_t(POOL_ERROR);
   }
 
   auto path = pool_path(name_);

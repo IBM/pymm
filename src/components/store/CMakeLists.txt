@@ -9,4 +9,4 @@ if( ${ARCHITECTURE} STREQUAL "x86_64" )
 endif()
 
 add_subdirectory(mapstore)
-
+#add_subdirectory(test)

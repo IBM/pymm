@@ -13,6 +13,7 @@
 #ifndef __CCPM_FIXED_ARRAY_H__
 #define __CCPM_FIXED_ARRAY_H__
 
+#include <libpmem.h> /* pmem_memset */
 #include <stdexcept>
 
 namespace ccpm

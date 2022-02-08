@@ -21,22 +21,23 @@
 #include "filesystem.h"
 #include "nd_utils.h"
 
+#include <common/env.h>
 #include <common/exceptions.h>
 #include <common/fd_locked.h>
 #include <common/memory_mapped.h>
 #include <common/utils.h>
 
+#include <libpmem.h> /* pmem_memset */
 #include <fcntl.h>
 #include <sys/mman.h> /* MAP_LOCKED */
 #include <boost/icl/split_interval_map.hpp>
 #include <cinttypes>
+#include <cstring> /* memset */
 #include <fstream>
 #include <mutex>
 #include <set>
 #include <sstream>
 #include <stdexcept>
-
-#define DEBUG_PREFIX "dax_manager: "
 
 #if _NUPM_FILESYSTEM_STD_
 namespace fs = std::filesystem;
@@ -62,11 +63,11 @@ namespace
 			auto e = errno;
 			if ( e == 0 )
 			{
-				PLOG("USE_ODP=%d (%s on-demand paging)", int(odp), odp ? "using" : "not using");
+				FLOG("USE_ODP={} ({} on-demand paging)", int(odp), odp ? "using" : "not using");
 			}
 			else
 			{
-				PLOG("USE_ODP specification %s failed to parse: %s", p, ::strerror(e));
+				FLOG("USE_ODP specification {} failed to parse: {}", p, ::strerror(e));
 			}
 		}
 		return odp;
@@ -81,7 +82,6 @@ namespace
 
 const bool nupm::dax_manager::have_odp = init_have_odp();
 const int nupm::dax_manager::effective_map_locked = init_map_lock_mask();
-constexpr const char *nupm::dax_manager::_cname;
 
 nupm::path_use::path_use(path_use &&other_) noexcept
   : common::log_source(other_)
@@ -99,11 +99,9 @@ nupm::path_use::path_use(const common::log_source &ls_, const string_view &name_
   bool inserted = nupm_dax_manager_mapped.insert(std::string(name_)).second;
   if ( ! inserted )
   {
-    std::ostringstream o;
-    o << __func__ << ": instance already managing path (" << name_ << ")";
-    throw std::range_error(o.str());
+    throw std::range_error(common::format("{}: instance already managing path ({})", __func__, name_));
   }
-  CPLOG(3, "%s (%p): name: %s", __func__, common::p_fmt(this), _name.c_str());
+  CFLOGM(3, "({}): name: {}", common::p_fmt(this), _name);
 }
 
 nupm::path_use::~path_use()
@@ -112,7 +110,7 @@ nupm::path_use::~path_use()
   {
     std::lock_guard<std::mutex> g(nupm_dax_manager_mapped_lock);
     nupm_dax_manager_mapped.erase(_name);
-    CPLOG(3, "%s: dax mgr instance: %s", __func__, _name.c_str());
+    CFLOGM(3, "dax mgr instance: {}", _name);
   }
 }
 
@@ -134,7 +132,7 @@ std::pair<std::vector<common::byte_span>, std::size_t> get_mapping(const fs::pat
 		m.push_back(common::make_byte_span(reinterpret_cast<common::byte *>(addr), size));
 		covered += size;
 #if 0
-		PLOG("%s %s: %p, 0x%zx", __func__, path_map.c_str(), common::p_fmt(m.back().data()), m.back().size());
+		FLOGM("{}, 0x{:x}", path_map, common::p_fmt(m.back().data()), m.back().size());
 #endif
 		f >> addr >> size;
 	}
@@ -146,9 +144,7 @@ std::vector<common::byte_span> get_mapping(const fs::path &path_map, const std::
 	auto r = get_mapping(path_map);
     if ( r.second != expected_size )
 	{
-		std::ostringstream o;
-		o << __func__ << ": map file " << path_map << std::hex << std::showbase << " expected to cover " << expected_size << " bytes, but covers " << r.second << " bytes";
-		throw std::runtime_error(o.str());
+		throw std::runtime_error(common::format("{}: map file {} expected to cover 0x{:x} bytes, but covers 0x{:x} bytes", __func__, path_map, expected_size, r.second));
 	}
 	return r.first;
 }
@@ -167,12 +163,12 @@ void nupm::dax_manager::data_map_remove(const fs::directory_entry &e, const std:
 		static std::set<std::string> used_extensions { ".map", ".data" };
 		if ( used_extensions.count(p.extension().string()) != 0 )
 		{
-			CPLOG(1, "%s remove %s", __func__, p.c_str());
+			CFLOGM(1, "remove {}", p);
 			std::error_code ec;
 			fs::remove(p, ec);
 			if ( ec.value() == 0 )
 			{
-				PLOG("%s: removing %s: %s", __func__, p.c_str(), ec.message().c_str());
+				FLOGM("removing {}: {}", p, ec.message());
 			}
 		}
 	}
@@ -189,7 +185,7 @@ void nupm::dax_manager::data_map_remove(const fs::directory_entry &e, const std:
 		fs::remove(p, ec);
 		if ( ec.value() == 0 )
 		{
-			CPLOG(2, "%s: removed %s: %s", __func__, p.c_str(), ec.message().c_str());
+			CFLOGM(2, "removed {}: {}", p, ec.message());
 		}
 	}
 }
@@ -219,7 +215,7 @@ void nupm::dax_manager::map_register(const fs::directory_entry &de, const std::s
 		auto p = de.path();
 		if ( p.extension().string() == ".data" )
 		{
-			CPLOG(1, "%s %s", __func__, p.c_str());
+			CFLOGM(1, "{}", p);
 
 			auto pd = p;
 			auto pm = p;
@@ -246,7 +242,7 @@ void nupm::dax_manager::map_register(const fs::directory_entry &de, const std::s
 				{
 					throw std::runtime_error("multiple instances of path in configuration");
 				}
-				CPLOG(1, "%s: region %s at %p", __func__, itb.first->first.c_str(), ::base(itb.first->second._or.range()[0]));
+				CFLOGM(1, "region {} at {}", itb.first->first, ::base(itb.first->second._or.range()[0]));
 			}
 			catch ( const std::exception &e )
 			{
@@ -287,7 +283,7 @@ std::unique_ptr<arena> nupm::dax_manager::make_arena_fs(
 {
 	if ( ! have_odp )
 	{
-		PWRN("%s arena %s is a directory but On Demand Paging is disabled. Run with USE_ODP=1 to enable ODP", __func__, p.c_str());
+		FWRNM("arena {} is a directory but On Demand Paging is disabled. Run with USE_ODP=1 to enable ODP", p);
 	}
 	/* No checking. Although specifying a path twice would be odd, it causes no harm.
 	 * But perhaps we will scan all address maps to develop a free address interval set.
@@ -309,7 +305,7 @@ std::unique_ptr<arena> nupm::dax_manager::make_arena_none(
 	, bool // force_reset
 )
 {
-	PLOG("%s: %s is unsuitable as an arena: neither a character file nor a directory", __func__, p.c_str());
+	FLOGM("{} is unsuitable as an arena: neither a character file nor a directory", p);
 	return
 		std::make_unique<arena_none>(
 			static_cast<log_source &>(*this)
@@ -338,7 +334,7 @@ std::unique_ptr<arena> nupm::dax_manager::make_arena_dev(const path &p, addr_t b
 		{
 			throw std::runtime_error("multiple instances of path " + p.string() + " in configuration");
 		}
-		CPLOG(0, "%s: region %s at %p", __func__, itb.first->first.c_str(), ::base(itb.first->second._or.range()[0]));
+		CFLOGM(0, "region {} at {}", itb.first->first, ::base(itb.first->second._or.range()[0]));
 		return
 			std::make_unique<arena_dev>(
 				static_cast<log_source &>(*this)
@@ -370,9 +366,9 @@ bool nupm::dax_manager::enter(
 		);
 	if ( ! itb.second )
 	{
-		PLOG("%s: failed to insert %.*s (duplicate instance?)", __func__, int(id_.size()), id_.begin());
+		FLOGM("failed to insert {} (duplicate instance?)", id_);
 	}
-	CPLOG(1, "%s: region %s at %p", __func__, itb.first->first.c_str(), ::base(itb.first->second._or.range()[0]));
+	CFLOGM(1, "region {} at {}", itb.first->first, ::base(itb.first->second._or.range()[0]));
 	return itb.second;
 }
 
@@ -381,13 +377,14 @@ void nupm::dax_manager::remove(const string_view & id_)
 	auto itb = _mapped_spaces.find(std::string(id_));
 	if ( itb != _mapped_spaces.end() )
 	{
-		CPLOG(2, "%s: _mapped_spaces found %.*s at %p", __func__, int(id_.size()), id_.begin(), common::p_fmt(&itb->second));
-		CPLOG(1, "%s: region %s at %p", __func__, itb->first.c_str(), ::base(itb->second._or.range()[0]));
+		CFLOGM(2, "_mapped_spaces found {} at {}", id_, common::p_fmt(&itb->second));
+		CFLOGM(1, "region {} at {}", itb->first, ::base(itb->second._or.range()[0]));
 		_mapped_spaces.erase(itb);
 	}
 	else
 	{
-		CPLOG(2, "%s: _mapped_spaces does not contain %.*s", __func__, int(id_.size()), id_.begin());
+		CFLOGM(2, "_mapped_spaces does not contain {}", id_);
+		throw std::runtime_error(common::format("no region {}", id_));
 	}
 }
 
@@ -422,7 +419,7 @@ dax_manager::dax_manager(
   /* set up each configuration */
   for ( const auto& config: dax_configs ) {
 
-    CPLOG(0, DEBUG_PREFIX "region (%s,%lx)", config.path.c_str(), config.addr);
+    CFLOGM(0, "region ({},{})", config.path, config.addr);
 
     /* a dax_config entry may be either devdax or fsdax.
      * If the path names a directory it is fsdax, else is it devdax.
@@ -451,7 +448,7 @@ dax_manager::dax_manager(
 
 dax_manager::~dax_manager()
 {
-  CPLOG(0, "%s::%s", _cname, __func__);
+  CFLOGM(0, "{}", "");
 }
 
 void * dax_manager::locate_free_address_range(std::size_t size_)
@@ -466,18 +463,17 @@ void * dax_manager::locate_free_address_range(std::size_t size_)
 
 	for ( auto i : _address_fs_available )
 	{
-		PLOG("%s: free %p..%p", __func__, common::p_fmt(i.lower()), common::p_fmt(i.upper()));
+		FLOGM("free {}..{}", common::p_fmt(i.lower()), common::p_fmt(i.upper()));
 	}
 
-	throw std::runtime_error(__func__ + std::string(" out of address ranges"));
+	throw std::runtime_error(common::format("{} out of address ranges", __func__));
 }
 
 auto dax_manager::lookup_arena(arena_id_t arena_id) -> arena *
 {
   if ( _arenas.size() <= arena_id )
   {
-    throw Logic_exception("%s::%s: could not find header for region (%d)", _cname, __func__,
-                        arena_id);
+    throw Logic_exception("%s", common::format("could not find header for region ({})", arena_id));
   }
   return _arenas[arena_id].get();
 }
@@ -494,7 +490,7 @@ auto dax_manager::open_region(
   , unsigned arena_id
 ) -> region_descriptor
 {
-  guard_t           g(_reentrant_lock);
+  guard_t g(_reentrant_lock);
   return lookup_arena(arena_id)->region_get(name);
 }
 
@@ -504,23 +500,23 @@ auto dax_manager::create_region(
   , const size_t size_
 ) -> region_descriptor
 {
-  guard_t           g(_reentrant_lock);
+  guard_t g(_reentrant_lock);
   auto arena = lookup_arena(arena_id_);
-  CPLOG(1, "%s: %s size %zu arena_id %u", __func__, name_.begin(), size_, arena_id_);
+  CFLOGM(1, "{} size {} arena_id {}", name_, size_, arena_id_);
   try
   {
     auto r = arena->region_create(name_, this, size_);
-    CPLOG(0, "%s: path %s id  %.*s size req 0x%zx created at %p:%zx", __func__, arena->describe().data(), int(name_.size()), name_.begin(),  size_, ::base(r.address_map()[0]), ::size(r.address_map()[0]));
+    CFLOGM(0, "path {} id  {} size req 0x{:x} created at {}:{:x}", arena->describe().data(), name_,  size_, ::base(r.address_map()[0]), ::size(r.address_map()[0]));
     return r;
   }
   catch ( const General_exception &e )
   {
-    CPLOG(2,"%s: path %s id %.*s size req 0x%zx create failed (available 0x%zx) %s", __func__, arena->describe().data(), int(name_.size()), name_.begin(), size_, arena->get_max_available(), e.cause());
+    CFLOGM(2,"path {} id {} size req 0x{:x} create failed (available 0x{:x}) {}", arena->describe().data(), name_, size_, arena->get_max_available(), e.cause());
     return region_descriptor();
   }
   catch ( const std::exception &e )
   {
-    CPLOG(2,"%s: path %s id %.*s size req 0x%zx create failed (available 0x%zx) %s", __func__, arena->describe().data(), int(name_.size()), name_.begin(), size_, arena->get_max_available(), e.what());
+    CFLOGM(2,"path {} id {} size req 0x{:x} create failed (available 0x{:x}) {}", arena->describe().data(), name_, size_, arena->get_max_available(), e.what());
     return region_descriptor();
   }
 }
@@ -531,14 +527,14 @@ auto dax_manager::resize_region(
   , const size_t size_
 ) -> region_descriptor
 {
-  guard_t           g(_reentrant_lock);
+  guard_t g(_reentrant_lock);
   auto arena = lookup_arena(arena_id_);
-  CPLOG(1, "%s: %.*s size %zu", __func__, int(id_.size()), id_.begin(), size_);
+  CFLOGM(1, "{} size {}", id_, size_);
   auto it = _mapped_spaces.find(std::string(id_));
   if ( it == _mapped_spaces.end() )
   {
-    PLOG("%s: failed to find %.*s", __func__, int(id_.size()), id_.begin());
-    throw std::runtime_error(std::string(__func__) + ": failed to find " + std::string(id_));
+    FLOGM("failed to find {}", id_);
+    throw std::runtime_error(common::format("{}: failed to find {}", __func__, id_));
   }
   else
   {
@@ -549,7 +545,7 @@ auto dax_manager::resize_region(
 
 void dax_manager::erase_region(const string_view & name, arena_id_t arena_id)
 {
-  guard_t           g(_reentrant_lock);
+  guard_t g(_reentrant_lock);
   lookup_arena(arena_id)->region_erase(name, this);
 }
 
@@ -561,7 +557,7 @@ std::list<std::string> dax_manager::names_list(arena_id_t arena_id)
 
 size_t dax_manager::get_max_available(arena_id_t arena_id)
 {
-  guard_t           g(_reentrant_lock);
+  guard_t g(_reentrant_lock);
   return lookup_arena(arena_id)->get_max_available();
 }
 
@@ -572,14 +568,23 @@ auto dax_manager::recover_metadata(const byte_span iov_,
   DM_region_header *rh = static_cast<DM_region_header *>(::base(iov_));
 
   if ( force_rebuild || ! rh->check_magic() ) {
-    PLOG("%s::%s: creating.", _cname, __func__);
+    FLOGM("{}", "creating.");
+    /* github 185: clear memory on pool deletion (means create will assert
+     * if memory not clear). This step takes minutes with large-ish pmem,
+     * so this clear, and the checks for zeroed memory, are normally disabled.
+     * This clear avoids false asserts.
+     */
+    if ( common::env_value("MCAS_CHECK_POOL_CLEAR", false) )
+    {
+      assert((pmem_memset_nodrain(::base(iov_), 0, ::size(iov_)), true));
+    }
     rh = new (::base(iov_)) DM_region_header(::size(iov_));
-    PLOG("%s::%s: created.", _cname, __func__);
+    FLOGM("{}", "created.");
   }
   else {
-    PLOG("%s::%s: recovering.", _cname, __func__);
+    FLOGM("{}", "recovering.");
     rh->check_undo_logs();
-    PLOG("%s::%s: recovered.", _cname, __func__);
+    FLOGM("{}", "recovered.");
   }
 
   return rh;

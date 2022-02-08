@@ -24,11 +24,7 @@ link_directories(${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}) # ndctl
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 link_directories(${CMAKE_INSTALL_PREFIX}/lib64) # gtest
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(GTEST_LIB gtest)
-else()
-  set(GTEST_LIB gtestd)
-endif()
+set(GTEST_LIB "gtest$<$<CONFIG:Debug>:d>")
 
 add_executable(libccpm-test1 test1.cpp)
 add_executable(libccpm-test2 test2.cpp)

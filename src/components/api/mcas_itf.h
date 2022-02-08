@@ -1,5 +1,5 @@
 /*
-  Copyright [2017-2020] [IBM Corporation]
+  Copyright [2017-2021] [IBM Corporation]
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
@@ -54,10 +54,6 @@ public:
   using key_t           = KVStore::key_t;
   using Attribute       = KVStore::Attribute;
   using Addr            = KVStore::Addr;
-  using byte            = common::byte;
-
-  template <typename T>
-    using basic_string_view = std::experimental::basic_string_view<T>;
 
   static constexpr async_handle_t  ASYNC_HANDLE_INIT  = nullptr;
 
@@ -231,12 +227,12 @@ public:
   {
     return
       async_put_direct(
-        pool
-        , key
-        , std::array<common::const_byte_span,1>{common::make_const_byte_span(value, value_len)}
-        , out_handle, std::array<memory_handle_t,1>{handle}
-        , flags
-      );
+                       pool
+                       , key
+                       , std::array<common::const_byte_span,1>{common::make_const_byte_span(value, value_len)}
+                       , out_handle, std::array<memory_handle_t,1>{handle}
+                       , flags
+                       );
   }
 
   /**
@@ -487,9 +483,9 @@ public:
   {
     return
       invoke_ado(pool,
-        basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
-        basic_string_view<byte>(static_cast<const byte *>(request), request_len),
-        flags, out_response, value_size);
+                 basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
+                 basic_string_view<byte>(static_cast<const byte *>(request), request_len),
+                 flags, out_response, value_size);
   }
 
   inline status_t invoke_ado(const IMCAS::pool_t        pool,
@@ -538,9 +534,9 @@ public:
   {
     return
       async_invoke_ado(pool,
-        basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
-        basic_string_view<byte>(common::pointer_cast<const byte>(request.data()), request.length()),
-        flags, out_response, out_async_handle, value_size);
+                       basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
+                       basic_string_view<byte>(common::pointer_cast<const byte>(request.data()), request.length()),
+                       flags, out_response, out_async_handle, value_size);
   }
 
   inline status_t async_invoke_ado(const IMCAS::pool_t        pool,
@@ -554,9 +550,9 @@ public:
   {
     return
       async_invoke_ado(pool,
-        basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
-        basic_string_view<byte>(static_cast<const byte *>(request), request_len),
-        flags, out_response, out_async_handle, value_size);
+                       basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
+                       basic_string_view<byte>(static_cast<const byte *>(request), request_len),
+                       flags, out_response, out_async_handle, value_size);
   }
 
 
@@ -597,10 +593,10 @@ public:
   {
     return
       invoke_put_ado(pool,
-        basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
-        basic_string_view<byte>(static_cast<const byte *>(request), request_len),
-        basic_string_view<byte>(static_cast<const byte *>(value), value_len),
-        root_len, flags, out_response);
+                     basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
+                     basic_string_view<byte>(static_cast<const byte *>(request), request_len),
+                     basic_string_view<byte>(static_cast<const byte *>(value), value_len),
+                     root_len, flags, out_response);
   }
 
   inline status_t invoke_put_ado(const IMCAS::pool_t        pool,
@@ -662,9 +658,9 @@ public:
   {
     return
       async_invoke_put_ado(pool,
-        basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
-        basic_string_view<byte>(static_cast<const byte *>(request), request_len),
-        basic_string_view<byte>(static_cast<const byte *>(value), value_len),
+                           basic_string_view<byte>(common::pointer_cast<const byte>(key.data()), key.size()),
+                           basic_string_view<byte>(static_cast<const byte *>(request), request_len),
+                           basic_string_view<byte>(static_cast<const byte *>(value), value_len),
                            root_len, flags, out_response, out_async_handle);
   }
 
@@ -710,28 +706,41 @@ public:
   // clang-format on
 
   /**
-   * Create a "session" to a remote shard
+   * Create a session to a remote shard
    *
-   * @param debug_level Debug level (0-3)
-   * @param owner Owner info (not used)
-   * @param addr_with_port Address and port information, e.g. 10.0.0.22:11911
-   * (must be RDMA)
-   * @param nic_device RDMA network device (e.g., mlx5_0)
+   * @param debug_level         Debug level (0-3)
+   * @param patience            Time out patience in seconds
+   * @param owner               Owner info (not used)
+   * @param src_nic_device      Client-side network device (e.g., mlx5_0, eth0)
+   * @param src_ip_addr         Client-side IP address
+   * @param dest_addr_with_port Server-side IP address and port (e.g. 10.0.0.21:11911, 9.1.75.6:11911:sockets)
+   * @param other               Other optional parameters (e.g. { "security":"tls:auth" })
    *
    * @return Pointer to IMCAS instance. Use release_ref() to close.
    */
   virtual IMCAS* mcas_create_nsd(const unsigned, // debug_level
-                             const unsigned, // patience with server (in seconds)
-                             const string_view, // owner
-                             const string_view, // src_nic_device
-                             const string_view, // source: src_ip_addr
-                             const string_view, // destination: dest_addr_with_port
-                             const string_view = string_view()) // other
+                                 const unsigned, // patience
+                                 const string_view, // owner
+                                 const string_view, // src_nic_device
+                                 const string_view, // src_ip_addr
+                                 const string_view, // dest_addr_with_port
+                                 const string_view = string_view()) // other
   {
-    throw API_exception("IMCAS_factory::mcas_create(debug_level,patience,owner,addr_with_port,"
-                        "nic_device) not implemented");
+    throw API_exception("IMCAS_factory::mcas_create(debug_level,patience,owner,addr_with_port,nic_device) not implemented");
   }
 
+  /** 
+   * Create a session to a remote shard (alternative)
+   * 
+   * @param debug_level          Debug level
+   * @param patience             Timeout patience in seconds
+   * @param owner                Owner information (not used)
+   * @param dest_addr_with_port  Destination server IP address and port
+   * @param nic_device           Local NIC device to use (e.g., mlx5_0, eth0)
+   * @param other                Other optional parameters (e.g. { "security":"tls:auth" })
+   * 
+   * @return Pointer to IMCAS instance. Use release_ref() to close.
+   */
   IMCAS* mcas_create(const unsigned    debug_level,
                      const unsigned    patience,
                      const string_view owner,

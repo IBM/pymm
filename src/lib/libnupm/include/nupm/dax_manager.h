@@ -77,7 +77,6 @@ struct registry_memory_mapped
  */
 struct dax_manager : protected common::log_source, private registry_memory_mapped {
  private:
-  static constexpr const char *_cname = "dax_manager";
   using byte = common::byte;
 
  public:

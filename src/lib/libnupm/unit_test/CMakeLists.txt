@@ -17,11 +17,7 @@ link_directories(${CMAKE_INSTALL_PREFIX}/lib64)
 
 add_compile_options(-g -fPIC)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(GTEST_LIB gtest)
-else()
-  set(GTEST_LIB gtestd)
-endif()
+set(GTEST_LIB "gtest$<$<CONFIG:Debug>:d>")
 
 add_executable(libnupm-test test1.cpp)
 target_link_libraries(libnupm-test ${ASAN_LIB} common numa ndctl ${GTEST_LIB} pthread dl nupm pmem z gcov)  # add profiler for google profiler

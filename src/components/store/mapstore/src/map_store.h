@@ -1,5 +1,5 @@
 /*
-  Copyright [2017-2020] [IBM Corporation]
+  Copyright [2017-2021] [IBM Corporation]
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
@@ -24,7 +24,9 @@
 #include <api/kvstore_itf.h>
 #include "map_store_env.h"
 
-#define PREFIX "Map_store: "
+#include "numa_node_mask.h"
+#include <common/string_view.h>
+#include <string>
 
 namespace nupm
 {
@@ -33,22 +35,34 @@ namespace nupm
 
 class Map_store : public component::IKVStore /* generic Key-Value store interface */
 {
-  unsigned          _debug_level;
-  const std::string _mm_plugin_path;
+  unsigned    _debug_level;
+  std::string _mm_plugin_path;
+  numa_node_mask _numa_node_mask;
 public:
-  
+
   unsigned debug_level() { return _debug_level; }
 
   /**
    * Constructor
    *
-   * @param block_device Block device interface
+   * @param debug_level massage verbosity, 0 is least
+   * @param em_plugin_path path to memory plugin.
+   * @param owner store owner, currently ignored
+   * @param name store name, currently ignored
+   * @param numa-ode_mask comma-separated list of individual numa nodes or
+   *  ranges to use, if any, in the format accepted by numa_parse_nodstring,
+   *  e.g. "0,2,4-6"
    *
    */
   Map_store(const unsigned debug_level,
-            const std::string &mm_plugin_path,
-            const std::string &owner,
-            const std::string &name);
+            common::string_view mm_plugin_path,
+            common::string_view owner,
+            common::string_view name,
+            common::string_view numa_node_mask);
+  Map_store(const unsigned debug_level,
+            common::string_view mm_plugin_path,
+            common::string_view owner,
+            common::string_view name);
 
   /**
    * Destructor
@@ -74,6 +88,18 @@ public:
   }
 
   void unload() override { delete this; }
+
+  status_t map(const IKVStore::pool_t pool,
+    std::function<int(string_view_key key, string_view_value value)>
+    function);
+
+  status_t map(const pool_t pool,
+    std::function<int(string_view_key key, string_view_value value, const common::tsc_time_t timestamp)> function,
+    const common::epoch_time_t t_begin,
+    const common::epoch_time_t t_end);
+
+  status_t map_keys(const pool_t pool,
+    std::function<int(string_view_key key)> function);
 
 public:
   /* IKVStore */
@@ -162,16 +188,16 @@ public:
                             std::function<int(const std::string &key)> function) override;
 
   virtual void debug(const pool_t pool, unsigned cmd, uint64_t arg) override;
-  
+
   virtual status_t get_pool_regions(const pool_t pool,
                                     nupm::region_descriptor &out_regions) override;
-  
+
   virtual status_t grow_pool(const pool_t pool, const size_t increment_size,
                              size_t &reconfigured_size) override;
-  
+
   virtual status_t free_pool_memory(const pool_t pool, const void *addr,
                                     const size_t size = 0) override;
-  
+
   virtual status_t allocate_pool_memory(const pool_t pool, const size_t size,
                                         const size_t alignment,
                                         void *&out_addr) override;
@@ -188,66 +214,6 @@ public:
 
   virtual status_t close_pool_iterator(const pool_t pool,
                                        pool_iterator_t iter) override;
-};
-
-class Map_store_factory : public component::IKVStore_factory {
-public:
-  /**
-   * Component/interface management
-   *
-   */
-  DECLARE_VERSION(1.0f);
-  DECLARE_COMPONENT_UUID(0xfac20985, 0x1253, 0x404d, 0x94d7, 0x77, 0x92, 0x75, 0x21, 0xa1, 0x21);
-
-  virtual ~Map_store_factory() {
-  }
-  
-  void *query_interface(component::uuid_t &itf_uuid) override {
-    if (itf_uuid == component::IKVStore_factory::iid()) {
-      return static_cast<component::IKVStore_factory *>(this);
-    }
-    else return NULL;  // we don't support this interface
-  }
-
-  void unload() override { delete this; }
-
-  virtual component::IKVStore *create(unsigned debug_level,
-                                      const IKVStore_factory::map_create &mc) override
-  {
-    auto owner_it = mc.find(+component::IKVStore_factory::k_owner);
-    auto name_it = mc.find(+component::IKVStore_factory::k_name);
-    auto mm_plugin_path_it = mc.find(+component::IKVStore_factory::k_mm_plugin_path);
-
-    std::string checked_mm_plugin_path;
-    if(mm_plugin_path_it == mc.end()) {
-      checked_mm_plugin_path = DEFAULT_MM_PLUGIN_PATH;
-    }
-    else {
-      std::string path = mm_plugin_path_it->second;
-
-      if(access(path.c_str(), F_OK) != 0) {
-        path = DEFAULT_MM_PLUGIN_LOCATION + path;
-        if(access(path.c_str(), F_OK) != 0) {
-          PERR("inaccessible plugin path (%s) and (%s)", mm_plugin_path_it->second.c_str(), path.c_str());
-          throw General_exception("unable to open mm_plugin");
-        }
-        checked_mm_plugin_path = path;
-      }
-      else {
-        checked_mm_plugin_path = path;
-      }
-    }
-    
-    component::IKVStore *obj =
-      static_cast<component::IKVStore *>
-      (new Map_store(debug_level,
-                     checked_mm_plugin_path,
-                     owner_it == mc.end() ? "owner" : owner_it->second,
-                     name_it == mc.end() ? "name" : name_it->second));
-    assert(obj);
-    obj->add_ref();
-    return obj;
-  }
 };
 
 #endif

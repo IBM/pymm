@@ -70,7 +70,7 @@ class Rca_AVL_internal : private common::log_source {
     assert(ptr);
     assert(_allocators[numa_node_u]);
 
-    auto mrp = _allocators[unsigned(numa_node)]->alloc_at(reinterpret_cast<addr_t>(ptr), size);
+    auto mrp = _allocators[numa_node_u]->alloc_at(reinterpret_cast<addr_t>(ptr), size);
     if (mrp == nullptr)
       throw General_exception("alloc_at on AVL range allocator failed unexpectedly");
   }
