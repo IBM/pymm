@@ -3,9 +3,8 @@
 
 '''
 Author: Moshik Hershcovitch <moshikh@il.ibm.com> 2022
-License: Apache, Version 2.0
+License: 3-clause BSD
 '''
-
 import networkx as nx
 import pandas as pd
 from networkx.algorithms import find_cycle

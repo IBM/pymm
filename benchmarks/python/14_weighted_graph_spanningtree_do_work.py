@@ -2,19 +2,9 @@
 import time
 import os
 
-import urllib.request, urllib.parse, urllib.error
-import networkx as nx
-import io
-import requests
-import csv
-import re
-from networkx.algorithms import find_cycle
-import time
-# import graph
-
 '''
 Author: Moshik Hershcovitch <moshikh@il.ibm.com> 2022
-License: Apache, Version 2.0
+License: 3-clause BSD
 '''
 
 import networkx as nx
