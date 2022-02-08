@@ -1,0 +1,31 @@
+/*
+  Copyright [2017-2021] [IBM Corporation]
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+#ifndef _MCAS_REGION_MEMORY_NUMA_H_
+#define _MCAS_REGION_MEMORY_NUMA_H_
+
+#include "region_memory.h"
+
+#include <numa.h> /* bitmask */
+#include <cstddef> /* size_t */
+
+struct region_memory_numa
+	: public region_memory
+{
+	region_memory_numa(unsigned debug_level, std::size_t size, const bitmask *nodes);
+	region_memory_numa(const region_memory_numa &) = delete;
+	region_memory_numa &operator=(const region_memory_numa &) = delete;
+	~region_memory_numa() override;
+};
+
+#endif

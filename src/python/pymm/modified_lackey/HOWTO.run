@@ -1,0 +1,3 @@
+## Example command line
+
+LD_PRELOAD=src/python/pymm/build/lib.linux-x86_64-3.6/pymmcore.cpython-36m-x86_64-linux-gnu.so valgrind --tool=lackey --trace-children=yes  --trace-superblocks=no --trace-redir=no --trace-mem=yes  -- python3 foo.py
