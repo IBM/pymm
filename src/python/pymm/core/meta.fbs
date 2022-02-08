@@ -1,0 +1,49 @@
+namespace PyMM.Meta;
+
+enum DataType : uint16 {
+  Unknown       = 0,
+  Opaque        = 1,
+  NumPyArray    = 2,
+  TorchTensor   = 4,
+  String        = 8,
+  Bytes         = 9,
+  NumberFloat   = 21,
+  NumberInteger = 22,
+  LinkedList    = 23,
+  ThisIsPyMM    = 100,
+}
+
+enum DataSubType : uint16 {
+  NotApplicable = 0,
+  Ascii  = 10,
+  Utf8   = 11,
+  Utf16  = 12,
+  Latin1 = 13,
+}
+
+
+enum Constants : uint32 {
+  HdrSize = 36,
+  Magic = 202100001,
+}
+
+union Any { TorchTensor }
+
+struct FixedHeader {
+  magic   : uint32;
+  txbits  : uint32 = 0;
+  version : uint32 = 0;
+}
+
+table Header {
+  hdr     : FixedHeader (required);
+  type    : DataType;
+  subtype : DataSubType;
+}
+
+table TorchTensor {
+  requires_grad : bool = false;
+  is_leaf : bool = false;
+}
+
+root_type Header;

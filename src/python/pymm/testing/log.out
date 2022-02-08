@@ -1,0 +1,18 @@
+[32m[LOG]: load_backend: (hstore-cc) (/mnt/pmem0) () (0x900000000) [0m
+[32m[LOG]: dax config: [{"path":"/mnt/pmem0","addr":38654705664}] [0m
+[32m[LOG]: CCA init /home/danielwaddington/mcas/src/lib/libccpm/src/cca.cpp:72 0x55fb7719c560 (clear) [0m
+[32m[LOG]: using tiered memory provider (pmem_file=/mnt/pmem0/swap)(pmem_file_size_gb=1) [0m
+[32m[LOG]: Coded_exception code -1 cause [1m[31m<< EXCEPTION - unable to create transient mapped memory >>[0m [0m
+[31m[WRN]: transient memory unable to initialize (resource creation failed) [0m
+[32m[LOG]: persisting memory @0x90000a358 [0m
+[32m[LOG]: persisting memory @0x900004838 [0m
+[31m[WRN]: Python3.9 does not yet support disabling transient memory [0m
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.025s
+
+OK
+made ndarray instance from copy 'x' on shelf
+[0 0 0 ... 0 0 0]
+[38;2;255;255;255mOK! [38;2;255;255;255m
+[--(PyMM)--] Version v0.3.0 (CC=env)

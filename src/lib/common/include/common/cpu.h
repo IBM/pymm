@@ -1,0 +1,163 @@
+/*
+   eXokernel Development Kit (XDK)
+
+   Samsung Research America Copyright (C) 2013
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.
+
+   As a special exception, if you link the code in this file with
+   files compiled with a GNU compiler to produce an executable,
+   that does not cause the resulting executable to be covered by
+   the GNU Lesser General Public License.  This exception does not
+   however invalidate any other reasons why the executable file
+   might be covered by the GNU Lesser General Public License.
+   This exception applies to code released by its copyright holders
+   in files containing the exception.
+*/
+
+/*
+  Author(s):
+  Copyright (C) 2016, Daniel G. Waddington <daniel.waddington@ibm.com>
+  Copyright (C) 2014, Daniel G. Waddington <daniel.waddington@acm.org>
+*/
+
+#ifndef __COMMON_CPU_UTILS_H__
+#define __COMMON_CPU_UTILS_H__
+
+#include <common/exceptions.h>
+#include <common/logging.h>
+#include <common/types.h>
+#include <pthread.h>
+#include <sched.h>
+#include <string>
+#include <sstream>
+
+#if defined(__cplusplus)
+
+#if defined(__x86_64__) || defined(__x86_32__)
+#define CACHE_LINE_SIZE 64  // Intel only
+#define CACHE_LINE_SHIFT 6
+#elif defined(__powerpc64__)
+#define CACHE_LINE_SIZE 128  // ppc64le
+#define CACHE_LINE_SHIFT 7
+#else
+#error Unsupported HW architecture.
+#endif
+
+#if defined(__unix__)
+class cpu_mask_t {
+ private:
+  cpu_set_t cpu_set_;
+
+ public:
+  using core_ix_t = unsigned;
+  cpu_mask_t() : cpu_set_{} {}
+
+#pragma GCC diagnostic push
+#if defined __clang_major__ && __clang_major__ < 4
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+  void add_core(core_ix_t cpu) { CPU_SET(int(cpu), &cpu_set_); }
+
+  bool check_core(core_ix_t cpu) { return CPU_ISSET(int(cpu), &cpu_set_); }
+#pragma GCC diagnostic pop
+
+  core_ix_t first_core() {
+    if (!is_something_set()) throw General_exception("nothing set");
+    core_ix_t i = 0;
+    while (!check_core(i)) i++;
+    return i;
+  }
+
+  void set_mask(uint64_t mask) {
+    int current = 0;
+    while (mask > 0) {
+      if (mask & 0x1ULL) {
+#pragma GCC diagnostic push
+#if defined __clang_major__ && __clang_major__ < 4
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+        CPU_SET(current, &cpu_set_);
+#pragma GCC diagnostic pop
+      }
+      current++;
+      mask = mask >> 1;
+    }
+  }
+
+  void clear() { CPU_ZERO(&cpu_set_); }
+
+  size_t size() { return sizeof(cpu_set_t); }
+
+  bool is_something_set() { return (CPU_COUNT(&cpu_set_) > 0); }
+
+  int count() { return CPU_COUNT(&cpu_set_); }
+
+  std::string string_form() {
+    std::stringstream ss;
+    for (core_ix_t i = 0; i < 64; i++) {
+#pragma GCC diagnostic push
+#if defined __clang_major__ && __clang_major__ < 4
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+      (CPU_ISSET(i, &cpu_set_)) ? ss << "1" : ss << "0";
+#pragma GCC diagnostic pop
+    }
+    return ss.str();
+  }
+
+  const cpu_set_t *cpu_set() { return &cpu_set_; }
+};
+#elif defined(__MACH__)
+
+class cpu_mask_t {
+ private:
+ public:
+  cpu_mask_t() { PWRN("thread affinity not implemented for Mac OS"); }
+
+  cpu_mask_t(const cpu_mask_t &inst) {
+    PWRN("thread affinity not implemented for Mac OS");
+  }
+
+  void set_bit(int cpu) { PWRN("thread affinity not implemented for Mac OS"); }
+
+  void set_mask(uint64_t mask) {
+    PWRN("thread affinity not implemented for Mac OS");
+  }
+
+  size_t size() {
+    PWRN("thread affinity not implemented for Mac OS");
+    return 0;
+  }
+
+  bool is_set() {
+    PWRN("thread affinity (is_set) not implemented for Mac OS");
+    return false;
+  }
+
+  void dump() { PWRN("thread affinity not implemented for Mac OS"); }
+};
+
+#else
+#error Platform not supported.
+#endif
+
+int set_cpu_affinity_mask(cpu_mask_t& mask);
+status_t string_to_mask(std::string def, cpu_mask_t &mask);
+
+#endif
+
+#endif
