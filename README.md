@@ -1,5 +1,18 @@
 # PyMM
 
+Upadte submodels:
+
+```bash
+git submodule update --init --recursive
+```
+
+Create Build directory:
+
+```bash
+mkdir build
+cd build
+```
+
 Configure as debug build:
 
 ```bash
