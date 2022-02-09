@@ -4,6 +4,7 @@ project(pymm)
 
 option(FORCE_OTT_BUILD "force out of tree build" ON)
 option(BOOTSTRAP_DEPS "bootstrap to build deps" ON)
+option(BUILD_RUST "enabled Rust-based dependencies" OFF)
 
 # features
 option(FEATURE_TIMESTAMPS "feature: enable timestamps in hstore map" ON)
