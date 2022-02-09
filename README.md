@@ -28,5 +28,5 @@ make bootstrap
 Build everything else (-j optional for parallel build):
 
 ```
-make -j
+make -j install
 ```
