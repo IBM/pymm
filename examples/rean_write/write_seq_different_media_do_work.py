@@ -14,7 +14,7 @@ array =  np.load(filename)
 t = time.time() - t0
 print ("Loading the data from the file "+ filename +  " took: %0.2fsec" % t)
 
-pymm_size_mb = 4*int(array.nbytes/1024/1024)
+pymm_size_mb = 3*int(array.nbytes/1024/1024)
 
 ##################################################################
 # Deep copy from DRAM to DRAM                                    #
@@ -123,11 +123,11 @@ def ndarry_save_pm():
 
 
 
-#dram_dram()
-#dram_nvme_pickle()
-#dram_pm_pickle()
-#pymm_fs_dax()
-#pymm_dev_dax()
+dram_dram()
+dram_nvme_pickle()
+dram_pm_pickle()
+pymm_fs_dax()
+pymm_dev_dax()
 pymm_nvme()
 ndarry_save_nvme()
 ndarry_save_pm()
