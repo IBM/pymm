@@ -24,6 +24,6 @@ t = time.time() - t0
 print ("Creating the data of size %uMB took: %0.2fsec" % (int(array.nbytes/1024/1024), time.time() - t0))
 
 
-filename = 'data/18_nparray.npy'
+filename = 'data/ndarray.npy'
 print ("write to " + filename)
 np.save(filename, array)
