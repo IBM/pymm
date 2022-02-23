@@ -241,8 +241,6 @@ def main():
     results = run_tests_func(args)
     with open(args.output_dir + "_results." + str(array_size_gb) + "GB.json" ,'w') as fp:
             json.dump(results, fp)
-    print(json.dumps(results, indent=4, sort_keys=True))
-
 
 if __name__ == "__main__":
             main()

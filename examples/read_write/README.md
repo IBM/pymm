@@ -69,5 +69,8 @@ You can change the default locations
 ```
 
 
-
+Proccess that results
+```
+python3 process_results.py ./data/1GB 1 20 1GB ./processed
+```
 
