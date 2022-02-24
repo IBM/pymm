@@ -9,25 +9,22 @@ import statistics
 
 def initial_output_arrays(keys, raw_data, proccessed):
     for i in keys:
-        raw_data[i] = { "open_time": [], "copy_time" : [], "persist_time" : [], "close_time" : []}
+        raw_data[i] = { "open_time": [], "copy_time" : [], "close_persist_time" : []}
         proccessed[i] = {"open_time" : {"avg": 0, "min": 0, "max" : 0, "std" : 0},
                          "copy_time" : {"avg": 0, "min": 0, "max" : 0, "std" : 0},
-                         "persist_time" : {"avg": 0, "min": 0, "max" : 0, "std" : 0},
-                         "close_time" : {"avg": 0, "min": 0, "max" : 0, "std" : 0},
+                         "close_persist_time" : {"avg": 0, "min": 0, "max" : 0, "std" : 0},
                          "items" : 0}
 
 def add_raw_data(results, raw_data):
     for i in results.keys():
         raw_data[i]["open_time"].append(results[i]["open_time"])
         raw_data[i]["copy_time"].append(results[i]["copy_time"])
-        raw_data[i]["persist_time"].append(results[i]["persist_time"])
-        raw_data[i]["close_time"].append(results[i]["close_time"])
-
+        raw_data[i]["close_persist_time"].append(results[i]["close_persist_time"])
 
 def proccessed_data (raw_data, proccessed):
     for i in proccessed.keys():
         proccessed[i]["items"] = len(raw_data[i]["copy_time"])
-        for j in ("open_time", "copy_time", "persist_time", "close_time"):
+        for j in ("open_time", "copy_time", "close_persist_time"):
             proccessed[i][j]["avg"] = sum(raw_data[i][j])/ len(raw_data[i][j])
             proccessed[i][j]["max"] = max(raw_data[i][j])
             proccessed[i][j]["min"] = min(raw_data[i][j])
@@ -59,7 +56,7 @@ def main():
             print (raw_data)
             items += 1
     proccessed_data (raw_data, proccessed)
-    for j in ("open_time", "close_time", "persist_time", "copy_time"):
+    for j in ("open_time", "close_persist_time", "copy_time"):
         print (j)
         for i in proccessed.keys():
             print("{0} {1}".format(i, proccessed[i][j]))         
@@ -73,4 +70,3 @@ def main():
 if __name__ == "__main__":
             main()
 
-# save (func_name, path, is_input_DRAM, time_create, copy_time, persist_time, close_time)  
