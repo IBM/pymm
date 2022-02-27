@@ -15,8 +15,9 @@ size = 0
 array = np.array([3])
 np.random.seed(2)
 array_size_mb = 0
-pymm_size_mb = 150*1024
+pymm_size_mb = 200*1024
 pymm_shelf_factor = 3
+remove_write = False
 
 ##################################################################
 # Deep copy from DRAM to DRAM                                    #
@@ -49,7 +50,8 @@ def dram_pickle_func(path):
     t0 = time.time()
     fileObject.close()
     results['close_persist_time'] = time.time() - t0
-    #os.remove(filename)
+    if (remove_write):
+        os.remove(filename)
     return results
 
 ##################################################################
@@ -79,8 +81,10 @@ def pymm_fs_dax_func(path):
 #    t0 = time.time()
 #    s.persist()
 #    print ("[PM->PM[DEV-DAX(PyMM)]  persist %0.2f sec" %  (time.time() - t0))
-    #os.remove(path + "/" + path_split[1] + ".data")
-    #os.remove(path + "/" + path_split[1] + ".map")
+    print (path + "/" + path_split[1] + ".data")
+    if (remove_write):
+        os.remove(path + "/" + path_split[1] + ".data")
+        os.remove(path + "/" + path_split[1] + ".map")
     return results
 
 
@@ -138,6 +142,9 @@ def pymm_nvme_func(path):
 #    t0 = time.time()
 #    s2.array1 = s2.array
 #    print ("NVME->NVME(PyMM)] The time to copy a random float array of %u MB is %0.2f sec" % (int(array.nbytes/1024/1024), time.time() - t0))
+    if (remove_write):
+        os.remove(path + '/pymm_nvme.data')
+        os.remove(path + '/pymm_nvme.map')
     return results
 
 def ndarry_save_func(path):
@@ -147,7 +154,8 @@ def ndarry_save_func(path):
     np.save(filename, array)
     results["copy_time"] = time.time() - t0
     print ("[ndarry->NVMe (numpy_save)] The time to copy a random float array of %u MB is %0.2f sec" % (int(array.nbytes/1024/1024), results["copy_time"]))
-    #os.remove(filename + ".npy")
+    if (remove_write):
+        os.remove(filename + ".npy")
     return results
 
 def run_tests_func(args):
@@ -225,7 +233,7 @@ def create_rand_data(size_GB):
     global array, array_size_mb, pymm_size_mb
     array = np.random.rand(size)
     array_size_mb = int(array.nbytes/1024/1024)
-    pymm_size_mb = pymm_shelf_factor*int(array_size_mb)
+#    pymm_size_mb = pymm_shelf_factor*int(array_size_mb)
     print ("Creating the data of size %uMB took: %0.2fsec" % (int(array.nbytes/1024/1024), time.time() - t0))
     return array, pymm_size_mb
 
@@ -233,6 +241,7 @@ def create_rand_data(size_GB):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("size_GB", type=str, help="The data size in GB")
+    parser.add_argument("--no_remove", type=str, help="not remove the data after write")
     parser.add_argument("output_dir", type=str, help="where to store the results")
     parser.add_argument("--test_all", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--numa_local", action="store_true", default=False, help="run all the different options")

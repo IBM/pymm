@@ -46,20 +46,22 @@ def main():
     proccessed = {} 
     items = 0
     for i in range(int(args.start_index), int(args.end_index)+1):
-        filename = args.input_path + "/" + str(i) + "_results." + args.benchmark_size + ".json"
-        print (filename)
+        filename = args.input_path + str(i) + "_results." + args.benchmark_size + ".json"
+#        print (filename)
         with open(filename, 'r') as f:
             results = json.load(f)
             if (items == 0):
                 initial_output_arrays(results.keys(), raw_data, proccessed)
             add_raw_data(results, raw_data)
-            print (raw_data)
+#            print (raw_data)
             items += 1
     proccessed_data (raw_data, proccessed)
     for j in ("open_time", "close_persist_time", "copy_time"):
-        print (j)
+        print ("")
+        print ("{0} avg min max std".format(j))
         for i in proccessed.keys():
-            print("{0} {1}".format(i, proccessed[i][j]))         
+            print("{0} {1} {2} {3} {4}".format(i, proccessed[i][j]['avg'], proccessed[i][j]['min'], proccessed[i][j]['max'], proccessed[i][j]['std']))
+
 
 #    results = run_tests_func(args)
 #    with open(args.output_dir + "_results." + str(array_size_gb) + "GB.json" ,'w') as fp:
