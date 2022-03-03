@@ -1,0 +1,1 @@
+{"numpymmap_nvme": {"open_time": 0.03429913520812988, "copy_time": 129.00442671775818, "close_persist_time": 0.4932973384857178}, "numpymmap_fs_dax0": {"open_time": 0.007090330123901367, "copy_time": 66.20242643356323, "close_persist_time": 48.83710980415344}}

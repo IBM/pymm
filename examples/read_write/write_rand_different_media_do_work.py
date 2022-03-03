@@ -9,10 +9,11 @@ import os
 import argparse
 import json
 
+
+
 M = 1024*128
 G = 1024*M
 size = 0
-array = np.array([3])
 np.random.seed(2)
 array_size_mb = 0
 pymm_size_mb = 340*1024
@@ -29,23 +30,39 @@ def clear_caches ():
 # Copy from DRAM to a file located on file system               #
 ##################################################################
 # https://vmascagn.web.cern.ch/vmascagn/LABO_2020/numpy-memmap_for_ghost_imaging.html
-def numpymemmap_func(path, size_GB):
+def numpymemmap_func(path, size_GB, array_data, array_pos, persist_at_the_end):
     print (path)
     filename = path + '/numpy_mmap.npy'
     results = { "open_time": 0, "copy_time" : 0, "close_persist_time" : 0}
     print(filename)
+    array = np.zeros(int(size_GB) * 1024*1024*128)
     t0 = time.time()
     mmap_array = np.memmap(filename, dtype='float64', mode='w+', shape=(int(size_GB) * 1024*1024*128,))
-    results["open_time"] = time.time() - t0
-    t0 = time.time()
     mmap_array[:] = array[:]
-    results["copy_time"] = time.time() - t0
-    t0 = time.time()
     mmap_array.flush()
-    results['close_persist_time'] = time.time() - t0
-    print ("[DRAM->numpymemmap]  The time to copy a random float array of %u MB is %0.2f sec" %  (int(array.nbytes/1024/1024), results['open_time']))
-    print ("[DRAM->numpymemmap]  The time to copy a random float array of %u MB is %0.2f sec" %  (int(array.nbytes/1024/1024), results['copy_time']))
-    print ("[DRAM->numpymemmap]  The time to copy a random float array of %u MB is %0.2f sec" %  (int(array.nbytes/1024/1024), results['persist_time']))
+    results["open_time"] = time.time() - t0
+    print(np.amax(mmap_array))
+    t0_sum = 0; t1_sum = 0
+    t0 = time.time()
+    for i in range(array_pos.shape[0]):
+        mmap_array[array_pos[i]] = array_data[i]
+        if (not persist_at_the_end):
+            t0_sum += time.time() - t0
+            t1 = time.time()
+            mmap_array.flush()
+            t1_sum += time.time() - t1
+            t0 = time.time()
+    if (persist_at_the_end):
+        t0_sum = time.time() - t0
+        t1 = time.time()
+        mmap_array.flush()
+        t1_sum = time.time() - t1
+    results["copy_time"] = t0_sum
+    results['close_persist_time'] = t1_sum
+    print(np.amax(mmap_array))
+    print ("[DRAM->numpymemmap]  open_time  %0.2f sec" %   results['open_time'])
+    print ("[DRAM->numpymemmap]  copy_time %0.2f sec" %   results['copy_time'])
+    print ("[DRAM->numpymemmap]  persist_time %0.2f sec" % results['close_persist_time'])
     if (remove_write):
         os.remove(filename)
     return results
@@ -93,7 +110,7 @@ def dram_pickle_func(path):
 # Use PyMM library benchmark PM[FS-DAX]:                         #
 # from DRAM to PM[FS-DAX]                                        #
 ##################################################################
-def pymm_fs_dax_func(path):
+def pymm_fs_dax_func (path, size_GB, array_data, array_pos, persist_at_the_end):
     if not os.path.exists(path):
             os.makedirs(path)
     print (path)
@@ -101,22 +118,31 @@ def pymm_fs_dax_func(path):
     path_split = os.path.split(path)
     t0 = time.time()
     s = pymm.shelf(path_split[1],size_mb=pymm_size_mb,pmem_path=path,force_new=True)
-    results["open_time"] = time.time() - t0
-    t0 = time.time()
-    s.array = array
-    results["copy_time"] = time.time() - t0
-    print ("[DRAM->PM[FS-DAX](PyMM)]  The time to copy a random float array of %u MB is %0.2f sec" %  (int(array.nbytes/1024/1024), results["copy_time"]))
-    t0 = time.time()
+    s.array = np.zeros(int(int(size_GB)*1024*1024*1024/8))
     s.array.persist()
-    results["close_persist_time"] = time.time() - t0
-    print ("[PM->PM[FS-DAX(PyMM)]  persist %0.2f sec" %  (results["close_persist_time"]))
-#    t0 = time.time()
-#    s.array1 = s.array
-#    print ("[PM->PM[FS-DAX](PyMM)]   the time to copy a random float array of %u MB is %0.2f sec" %  (int(array.nbytes/1024/1024), time.time() - t0))
-#    t0 = time.time()
-#    s.persist()
-#    print ("[PM->PM[DEV-DAX(PyMM)]  persist %0.2f sec" %  (time.time() - t0))
-    print (path + "/" + path_split[1] + ".data")
+    results["open_time"] = time.time() - t0
+    t0_sum = 0; t1_sum = 0
+    print(np.amax(s.array))
+    t0 = time.time()
+    for i in range(array_pos.shape[0]):
+        s.array[array_pos[i]] = array_data[i]
+        if (not persist_at_the_end):
+            t0_sum += time.time() - t0
+            t1 = time.time()
+            s.array.persist()
+            t1_sum += time.time() - t1
+            t0 = time.time()
+    if (persist_at_the_end):
+        t0_sum = time.time() - t0
+        t1 = time.time()
+        s.array.persist()
+        t1_sum = time.time() - t1
+    results["copy_time"] = t0_sum
+    results['close_persist_time'] = t1_sum
+    print(np.amax(s.array))
+    print ("[DRAM->numpymemmap]  open_time  %0.2f sec" %   results['open_time'])
+    print ("[DRAM->numpymemmap]  copy_time %0.2f sec" %   results['copy_time'])
+    print ("[DRAM->numpymemmap]  persist_time %0.2f sec" % results['close_persist_time'])
     if (remove_write):
         os.remove(path + "/" + path_split[1] + ".data")
         os.remove(path + "/" + path_split[1] + ".map")
@@ -128,7 +154,7 @@ def pymm_fs_dax_func(path):
 # from DRAM to PM[DEV-DAX]                                       #
 ##################################################################
 
-def pymm_dev_dax_func(path):
+def pymm_dev_dax_func(path, array_data, array_pos, persist_at_the_end):
     results = { "open_time": 0, "copy_time" : 0, "close_persist_time" : 0}
     t0 = time.time()
     s1 = pymm.shelf('pymm_dev_dax',size_mb=pymm_size_mb,pmem_path=path,force_new=True)
@@ -136,10 +162,10 @@ def pymm_dev_dax_func(path):
 
     t0 = time.time()
     s1.array = array
+    s1.array[0].persist()
     results["copy_time"] = time.time() - t0
     print ("[DRAM->PM[DEV-DAX(PyMM)]  The time to copy a random float array of %u MB is %0.2f sec" %  (int(array.nbytes/1024/1024), results["copy_time"]))
     t0 = time.time()
-    s1.array.persist()
     results["close_persist_time"] = time.time() - t0
     print ("[PM->PM[DEV-DAX(PyMM)]  persist %0.2f sec" %  (results["close_persist_time"]))
 
@@ -193,19 +219,19 @@ def ndarry_save_func(path):
         os.remove(filename + ".npy")
     return results
 
-def run_tests_func(args):
+def run_tests_func(args, array_data, array_pos):
     results = {}
     if (args.dram):
         results['dram'] = dram_dram_func()
 
     if (args.numpymemmap_nvme):
-        results['numpymmap_nvme'] = numpymemmap_func(args.nvme_path, args.size_GB)
+        results['numpymmap_nvme'] = numpymemmap_func(args.nvme_path, args.size_GB, array_data, array_pos, args.persist_at_the_end)
     
     if (args.numpymemmap_fs_dax0):
-        results['numpymmap_fs_dax0'] = numpymemmap_func(args.fs_dax0_path, args.size_GB)
+        results['numpymmap_fs_dax0'] = numpymemmap_func(args.fs_dax0_path, args.size_GB, array_data, array_pos, args.persist_at_the_end)
 
     if (args.numpymemmap_fs_dax1):
-        results['numpymmap_fs_dax1'] = numpymemmap_func(args.fs_dax1_path, args.size_GB)
+        results['numpymmap_fs_dax1'] = numpymemmap_func(args.fs_dax1_path, args.size_GB, array_data, array_pos, args.persist_at_the_end)
 
     if (args.pickle_nvme):
         results['pickle_dram_nvme'] = dram_pickle_func(args.nvme_path)
@@ -217,19 +243,19 @@ def run_tests_func(args):
         results['pickle_dram_fs_dax1'] = dram_pickle_func(args.fs_dax1_path)
     
     if (args.pymm_fs_dax0): 
-        results['pymm_dram_fs_dax0'] = pymm_fs_dax_func(args.fs_dax0_path)
+        results['pymm_dram_fs_dax0'] = pymm_fs_dax_func(args.fs_dax0_path, args.size_GB, array_data, array_pos, args.persist_at_the_end)
     
     if (args.pymm_fs_dax1): 
-        results['pymm_dram_fs_dax1'] = pymm_fs_dax_func(args.fs_dax1_path)
+        results['pymm_dram_fs_dax1'] = pymm_fs_dax_func(args.fs_dax1_path, args.size_GB, array_data, array_pos, args.persist_at_the_end)
     
     if (args.pymm_dev_dax0):
-        results['pymm_dram_dev_dax0'] = pymm_dev_dax_func(args.dev_dax0_path)
+        results['pymm_dram_dev_dax0'] = pymm_fs_dax_func(args.nvme_path, args.size_GB, array_data, array_pos, args.persist_at_the_end)
     
     if (args.pymm_dev_dax1):
-        results['pymm_dram_dev_dax1'] = pymm_dev_dax_func(args.dev_dax1_path)
+        results['pymm_dram_dev_dax1'] = pymm_fs_dax_func(args.dev_dax1_path,args.size_GB, array_data, array_pos, args.persist_at_the_end)
     
     if (args.pymm_nvme):
-        results['pymm_dram_nvme'] = pymm_nvme_func(args.nvme_path)
+        results['pymm_dram_nvme'] = pymm_fs_dax_func(args.nvme_path,args.size_GB, array_data, array_pos, args.persist_at_the_end)
     
     if (args.numpy_save_nvme):
         results['ndarray_save_dram_nvme'] = ndarry_save_func(args.nvme_path)
@@ -273,24 +299,29 @@ def set_args(args):
         args.numpy_save_fs_dax0  = True    
     
 
-def create_rand_data(size_GB):
+def create_rand_data(num):
     ### Create the data ###
-    size = (int(size_GB)*G)
     t0 = time.time()
-    print ("start Creating the data of size %dGB " % (int(size_GB)))
-    global array, array_size_mb, pymm_size_mb
-    array = np.random.rand(size)
-    array_size_mb = int(array.nbytes/1024/1024)
-#    pymm_size_mb = pymm_shelf_factor*int(array_size_mb)
-    print ("Creating the data of size %uMB took: %0.2fsec" % (int(array.nbytes/1024/1024), time.time() - t0))
-    return array, pymm_size_mb
+    array = np.random.rand(num)
+    print ("Creating the data of shape[0]=%u took: %0.2fsec" % (array.shape[0], time.time() - t0))
+    print (array)
+    return array
+
+def create_rand_pos(num, end_pos):
+    ### Create the data ###
+    t0 = time.time()
+    array = np.random.randint(end_pos, size=(int(num),))
+    print ("Creating the data of size shape[0]=%u took: %0.2fsec" % (array.shape[0], time.time() - t0))
+    print (array)
+    return array
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("size_GB", type=str, help="The data size in GB")
     parser.add_argument("output_dir", type=str, help="where to store the results")
-    parser.add_argument("--no_remove", action="store_true", default=False, help="not remove the data after write")
+    parser.add_argument("--persist_at_the_end", action="store_true", default=False, help="Flush just at the end of the write")
+    parser.add_argument("--remove_write", action="store_true", default=False, help="not remove the data after write")
     parser.add_argument("--test_all", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--numa_local", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--dram", action="store_true", default=False, help="deep copy the array to the DRAM")    
@@ -315,13 +346,20 @@ def main():
     parser.add_argument("--dev_dax1_path", action = 'store', default="/dev/dax1.1", type = str, help ="The path to dev_dax [socket 1] --- the default is /dev/dax1.1")  
 
 
-    
-
     args = parser.parse_args()
-    clear_caches()
-    create_rand_data(args.size_GB)
+    
+    
+    num_write_items_8B = 1000*1 
+    num_write_items_64B = 1000000
+    num_write_items_4K = 100
+    num_write_items_2M = 10
+
+    array_data = create_rand_data (num_write_items_8B)
+    array_pos = create_rand_pos(num_write_items_8B, int(args.size_GB)*1024*1024*1024/8)
+
+#    clear_caches()
     set_args(args)
-    results = run_tests_func(args)
+    results = run_tests_func(args, array_data, array_pos)
     with open(args.output_dir + "_results." + str(args.size_GB) + "GB.json" ,'w') as fp:
             json.dump(results, fp)
 
