@@ -24,8 +24,7 @@ from .memoryresource import MemoryResource
 from .shelf import Shadow, ShelvedCommon
 
 dtypedescr = np.dtype
-wbinvd_threshold = 1073741824
-
+wbinvd_threshold = 1024*1024 # 1MB
 # shadow type for ndarray
 #
 class ndarray(Shadow):
@@ -351,7 +350,14 @@ class shelved_ndarray(np.ndarray, ShelvedCommon):
         if self._use_wbinvd and ((super().size * super().itemsize) > wbinvd_threshold):
             os.system("cat /proc/wbinvd")
             return
-        
         self._value_named_memory.persist()
 
-        
+
+    def persist_offset(self, offset, length):
+        '''
+        Flush cache and persistent to the value from offset till offset+length both in bytes
+        '''
+        buffer_save = self._value_named_memory.buffer
+        self._value_named_memory.buffer = self._value_named_memory.buffer[offset:offset+length] 
+        self._value_named_memory.persist()
+        self._value_named_memory.buffer = buffer_save 
