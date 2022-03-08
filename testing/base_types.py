@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -m unittest
+#!/usr/bin/python -m unittest
 #
 # basic base type test
 #

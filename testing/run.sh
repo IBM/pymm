@@ -22,6 +22,7 @@ do
         x=`basename $i .py`
         printf "Running test: "
         printf %-20s $x
+        rm -Rf /mnt/pmem0/test_hstore_*
         python $i &> $LOG
         if cat $LOG | grep -q 'FAILED' ; then
             printf "$(color_fail FAILED)\n"
@@ -32,3 +33,5 @@ do
         fi    
     fi
 done
+
+rm -Rf /mnt/pmem0/test_hstore_*
