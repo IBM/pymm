@@ -359,6 +359,7 @@ class shelved_ndarray(np.ndarray, ShelvedCommon):
         '''
         Flush partial region of cache and make persistent
         '''
-        self._value_named_memory.persist_offset(offset * super().itemsize, length * super().itemsize)
+        item_size_bytes = super().itemsize
+        self._value_named_memory.persist_offset(offset * item_size_bytes, length * item_size_bytes)
 
         
