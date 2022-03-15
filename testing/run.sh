@@ -22,13 +22,14 @@ do
         x=`basename $i .py`
         printf "Running test: "
         printf %-20s $x
+        rm -Rf /mnt/pmem0/test_hstore_*
         python $i &> $LOG
-        if cat $LOG | grep -q 'FAILED' ; then
-            printf "$(color_fail FAILED)\n"
-        elif cat $LOG | grep -q 'Segmentation fault' ; then
-            printf "$(color_fail FAILED) (SEGV)\n"
-        else
+        if cat $LOG | grep -q "OK"; then
             printf "$(color_pass PASSED)\n"
+        else
+            printf "$(color_fail FAILED)\n"
         fi    
     fi
 done
+
+rm -Rf /mnt/pmem0/test_hstore_*

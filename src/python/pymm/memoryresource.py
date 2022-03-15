@@ -176,6 +176,16 @@ class MemoryReference():
         self.mr._MemoryResource_persist_memory_view(self.buffer)
 
         
+    def persist_offset(self, offset_bytes, len_bytes):
+        '''
+        Flush region of cached memory (normally for persistence)
+        '''
+        if offset_bytes + len_bytes > len(self.buffer):
+            raise RuntimeError('persist_offset: invalid offset parameter')
+        self.mr._MemoryResource_persist_memory_view(self.buffer[offset_bytes:offset_bytes+len_bytes])
+
+
+        
 class MemoryResource(pymmcore.MemoryResource):
     '''
     MemoryResource represents a heap allocator and physical memory

@@ -120,11 +120,28 @@ class TestNdarray(unittest.TestCase):
         self.s.A[:, 0] = (self.s.b - self.s.c).reshape(-1)
 
     def test_matrixop_and_reshape(self):
+        log("Testing: matrix op reshape")
         self.s.theta = pymm.ndarray((3, 4,))
         self.s.theta.fill(2.0)
         self.s.moment = pymm.ndarray((3, 4,))
         self.s.moment.fill(1.2)
-        self.s.theta_deviation = (self.s.theta - self.s.moment).reshape(-1)        
+        self.s.theta_deviation = (self.s.theta - self.s.moment).reshape(-1)
+
+    def test_partial_persist(self):
+        log("Testing: partial persist")
+        self.s.r = np.ndarray((10,))
+        self.s.r.fill(1)
+        self.s.r.persist_offset(0,1)
+        self.s.r.persist_offset(5,5)
+        exception = False
+        try:
+            self.s.r.persist_offset(5,6) # should overflow
+        except:
+            exception = True
+        if not exception:
+            print_error("persist_offset overflow did not error as it should")
+        
+
     
         
 

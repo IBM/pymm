@@ -17,6 +17,7 @@ import pymmcore
 import numpy as np
 import copy
 import os
+import sys
 
 from .metadata import *
 from numpy import uint8, ndarray, dtype, float
@@ -353,5 +354,12 @@ class shelved_ndarray(np.ndarray, ShelvedCommon):
             return
         
         self._value_named_memory.persist()
+
+    def persist_offset(self, offset, length):
+        '''
+        Flush partial region of cache and make persistent
+        '''
+        item_size_bytes = super().itemsize
+        self._value_named_memory.persist_offset(offset * item_size_bytes, length * item_size_bytes)
 
         
