@@ -8,7 +8,7 @@ import os.path
 import os
 import argparse
 import json
-
+ 
 
 
 M = 1024*128
@@ -19,6 +19,8 @@ array_size_mb = 0
 pymm_size_mb = 150*1024
 pymm_shelf_factor = 3
 remove_write = False
+num_writes = 1000000
+write_size = 8
 
 def clear_caches ():
     os.system("free -m; sync; echo 3 > /proc/sys/vm/drop_caches; swapoff -a && swapon -a;")
@@ -41,9 +43,13 @@ def numpymemmap_func(path, size_GB, array_data, array_pos, persist_at_the_end):
     mmap_array.flush()
     results["open_time"] = time.time() - t0
     t0_sum = 0; t1_sum = 0
+    itemsize = int(write_size/8)
     t0 = time.time()
     for i in range(array_pos.shape[0]):
-        mmap_array[array_pos[i]] = array_data[i]
+        array_idx = array_pos[i]
+        data_idx = i*itemsize
+        mmap_array[array_idx:array_idx+itemsize] = array_data[data_idx:data_idx+itemsize]
+#        print((mmap_array > 0).sum())
         if (not persist_at_the_end):
             t0_sum += time.time() - t0
             t1 = time.time()
@@ -57,7 +63,6 @@ def numpymemmap_func(path, size_GB, array_data, array_pos, persist_at_the_end):
         t1_sum = time.time() - t1
     results["copy_time"] = t0_sum
     results['close_persist_time'] = t1_sum
-    print(np.amax(mmap_array))
     print ("[DRAM->numpymemmap]  open_time  %0.2f sec" %   results['open_time'])
     print ("[DRAM->numpymemmap]  copy_time %0.2f sec" %   results['copy_time'])
     print ("[DRAM->numpymemmap]  persist_time %0.2f sec" % results['close_persist_time'])
@@ -82,15 +87,17 @@ def pymm_func (path, size_GB, array_data, array_pos, persist_at_the_end):
     s.array.persist()
     results["open_time"] = time.time() - t0
     t0_sum = 0; t1_sum = 0
+    itemsize = int(write_size/8)
     t0 = time.time()
-    itemsize = s.array.itemsize
     for i in range(array_pos.shape[0]):
-        array_ind = array_pos[i]
-        s.array[array_ind] = array_data[i]
+        array_idx = array_pos[i]
+        data_idx = i*itemsize
+        s.array[array_idx:array_idx+itemsize] = array_data[data_idx:data_idx+itemsize]
+#        print((s.array > 0).sum())
         if (not persist_at_the_end):
             t0_sum += time.time() - t0
             t1 = time.time()
-            s.array.persist_offset(array_ind,1)
+            s.array.persist_offset(array_idx,itemsize)
 #            exit(0)
             t1_sum += time.time() - t1
             t0 = time.time()
@@ -238,6 +245,8 @@ def main():
     parser.add_argument("output_dir", type=str, help="where to store the results")
     parser.add_argument("--persist_at_the_end", action="store_true", default=False, help="Flush just at the end of the write")
     parser.add_argument("--remove_write", action="store_true", default=False, help="not remove the data after write")
+    parser.add_argument("--num_writes", type=int, default=1000*1000, help="The number of writes to the array")
+    parser.add_argument("--write_size", type=int, default=8, help="The write size in Bytes")
     parser.add_argument("--test_all", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--numa_local", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--numpymemmap_nvme", action="store_true", default=False, help="save the array as numpy_mmap")    
@@ -260,20 +269,24 @@ def main():
 
     args = parser.parse_args()
     
+    set_args(args)
     
-#    num_write_items_8B = 1000*1000*10 
-    num_write_items_8B = 10*1
+    global num_writes
+    global write_size
+    num_writes =  args.num_writes
+    write_size =  args.write_size
+    num_write_items_8B = 1000*1000 
     num_write_items_64B = 1000000
     num_write_items_4K = 100
     num_write_items_2M = 10
 
-    array_write_data = create_rand_data (num_write_items_8B)
-    array_pos = create_rand_pos(num_write_items_8B, int(args.size_GB)*1024*1024*1024/8)
+    array_write_data = create_rand_data (int(num_writes*write_size/8))
+    print (array_write_data)
+    array_pos = create_rand_pos(num_writes, int(args.size_GB)*1024*1024*1024/8 - write_size/8)
 
 #    clear_caches()
-    set_args(args)
     results = run_tests_func(args, array_write_data, array_pos)
-    with open(args.output_dir + "_results." + str(args.size_GB) + "GB.json" ,'w') as fp:
+    with open(args.output_dir + "_results." + str(args.size_GB) + "GB.write_size_" + str(args.write_size) + "B.num_write_" + str(args.num_writes) + ".json" ,'w') as fp:
             json.dump(results, fp)
 
 if __name__ == "__main__":
