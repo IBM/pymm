@@ -27,6 +27,30 @@ def clear_caches ():
     os.system("free -m;")
 
 
+### DRAM ##
+def dram_dram_func(size_GB, array_data, array_pos):
+    results = { "open_time": 0, "copy_time" : 0, "close_persist_time" : 0}
+    t0 = time.time()
+    array = np.zeros(int(size_GB) * 1024*1024*128)
+    results["open_time"] = time.time() - t0
+    t0_sum = 0; 
+    itemsize = int(write_size/8)
+    t0 = time.time()
+    for i in range(array_pos.shape[0]):
+        array_idx = array_pos[i]
+        data_idx = i*itemsize
+        array[array_idx:array_idx+itemsize] = array_data[data_idx:data_idx+itemsize]
+#        print((array > 0).sum())
+    results["copy_time"] = time.time() - t0 
+    print(np.amax(array))
+    print ("[DRAM]-> DRAM open_time  %0.2f sec" %   results['open_time'])
+    print ("[DRAM]-> DRAM copy_time %0.2f sec" %   results['copy_time'])
+    print ("[DRAM]-> DRAM persist_time %0.2f sec" % results['close_persist_time'])
+    return results
+
+
+
+
 ##################################################################
 # Copy from DRAM to a file located on file system               #
 ##################################################################
@@ -127,9 +151,13 @@ def ndarry_save_func(path, size_GB, array_data, array_pos, persist_at_the_end):
     np.save(filename, array)
     results["open_time"] = time.time() - t0
     t0_sum = 0; t1_sum = 0
+    itemsize = int(write_size/8)
     t0 = time.time()
     for i in range(array_pos.shape[0]):
-        array[array_pos[i]] = array_data[i]
+        array_idx = array_pos[i]
+        data_idx = i*itemsize
+        array[array_idx:array_idx+itemsize] = array_data[data_idx:data_idx+itemsize]
+#        print((array > 0).sum())
         if (not persist_at_the_end):
             t0_sum += time.time() - t0
             t1 = time.time()
@@ -156,6 +184,11 @@ def ndarry_save_func(path, size_GB, array_data, array_pos, persist_at_the_end):
 
 def run_tests_func(args, array_data, array_pos):
     results = {}
+
+
+    if (args.dram):
+        results['dram'] = dram_dram_func(args.size_GB, array_data, array_pos)
+
     if (args.numpymemmap_nvme):
         results['numpymmap_nvme'] = numpymemmap_func(args.nvme_path, args.size_GB, array_data, array_pos, args.persist_at_the_end)
     
@@ -227,7 +260,7 @@ def create_rand_data(num):
     t0 = time.time()
     array = np.random.rand(num)
     print ("Creating the data of shape[0]=%u took: %0.2fsec" % (array.shape[0], time.time() - t0))
-    print (array)
+#    print (array)
     return array
 
 def create_rand_pos(num, end_pos):
@@ -235,7 +268,7 @@ def create_rand_pos(num, end_pos):
     t0 = time.time()
     array = np.random.randint(end_pos, size=(int(num),))
     print ("Creating the data of size shape[0]=%u took: %0.2fsec" % (array.shape[0], time.time() - t0))
-    print (array)
+#    print (array)
     return array
 
 
@@ -244,11 +277,12 @@ def main():
     parser.add_argument("size_GB", type=str, help="The data size in GB")
     parser.add_argument("output_dir", type=str, help="where to store the results")
     parser.add_argument("--persist_at_the_end", action="store_true", default=False, help="Flush just at the end of the write")
-    parser.add_argument("--remove_write", action="store_true", default=False, help="not remove the data after write")
+    parser.add_argument("--remove_write", action="store_true", default=False, help="removing the data after write")
     parser.add_argument("--num_writes", type=int, default=1000*1000, help="The number of writes to the array")
     parser.add_argument("--write_size", type=int, default=8, help="The write size in Bytes")
     parser.add_argument("--test_all", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--numa_local", action="store_true", default=False, help="run all the different options")
+    parser.add_argument("--dram", action="store_true", default=False, help="deep copy the array to the DRAM")    
     parser.add_argument("--numpymemmap_nvme", action="store_true", default=False, help="save the array as numpy_mmap")    
     parser.add_argument("--numpymemmap_fs_dax0", action="store_true", default=False, help="save the array as numpy_mmap")    
     parser.add_argument("--numpymemmap_fs_dax1", action="store_true", default=False, help="save the array as numpy_mmap")    
@@ -281,7 +315,7 @@ def main():
     num_write_items_2M = 10
 
     array_write_data = create_rand_data (int(num_writes*write_size/8))
-    print (array_write_data)
+#    print (array_write_data)
     array_pos = create_rand_pos(num_writes, int(args.size_GB)*1024*1024*1024/8 - write_size/8)
 
 #    clear_caches()

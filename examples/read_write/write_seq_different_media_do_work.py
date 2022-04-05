@@ -290,7 +290,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("size_GB", type=str, help="The data size in GB")
     parser.add_argument("output_dir", type=str, help="where to store the results")
-    parser.add_argument("--no_remove", action="store_true", default=False, help="not remove the data after write")
+    parser.add_argument("--remove_write", action="store_true", default=False, help="removing the data after write")
     parser.add_argument("--test_all", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--numa_local", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--dram", action="store_true", default=False, help="deep copy the array to the DRAM")    
