@@ -20,15 +20,13 @@ libraries (e.g., scikit-learn) really easy.
 
 # Installation
 
-## 
-
-## Install Dependencies
+### Install Dependencies
 ```
 ./deps/install-<Your-OS-Version>.sh
 ./deps/install-python-deps.sh
 ```
 
-## Install PyMM
+### Install PyMM
 ```
 python setup.py install
 ```
@@ -36,11 +34,11 @@ python setup.py install
 For more installation detailes: [PyMM_BUILD](./info/PyMM_Build.md)
 
 
-## Docker hub container image
+### Docker hub container image
 A pre-complie pymm with the latest version:
 https://hub.docker.com/repository/docker/moshik1/pymm
 
-### Docker run command
+#### Docker run command
 In the docker run command, you should add a volume mount point that the shelf will run on.
 In this example, we are using "/mnt/pmem0" for FS-DAX, but you can also use any other mount point. 
 ```
@@ -72,7 +70,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 ```
 
 
-## Persistent Shelf Abstraction
+### Persistent Shelf Abstraction
 
 PyMM allows the programmer to easily define what type of memory (i.e.,
 volatile or persistent) a variable should be assigned to.  This is
@@ -118,7 +116,7 @@ easily recovered.  This is a topic of future work.
 If you are using a devdax persistent memory partition, you can use the DAX_RESET=1
 environment variable to reset and clear the pool.
 
-## Shelving Variables
+### Shelving Variables
 
 When a shelf is opened, any variables on it are immediately available.  There
 is no need for loading or de-serialization (e.g., unpickling).
@@ -230,7 +228,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> pymm.demo(True)
 ```
 
-## Supported Types
+### Supported Types
 
 Currently, only NumPy ndarray types can be put on a shelf.  Future work plans to look at
 supporting other types.
