@@ -20,13 +20,13 @@ libraries (e.g., scikit-learn) really easy.
 
 # Installation
 
-### Install Dependencies
+## Install Dependencies
 ```
 ./deps/install-<Your-OS-Version>.sh
 ./deps/install-python-deps.sh
 ```
 
-### Install PyMM
+## Install PyMM
 ```
 python setup.py install
 ```
@@ -34,7 +34,7 @@ python setup.py install
 For more installation detailes: [PyMM_BUILD](./info/PyMM_Build.md)
 
 
-### Docker hub container image
+## Docker hub container image
 A pre-complie pymm with the latest version:
 https://hub.docker.com/repository/docker/moshik1/pymm
 
