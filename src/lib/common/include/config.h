@@ -1,1 +1,1 @@
-#define COMPONENT_DLL_INSTALL_DIR "/home/danielwaddington/pymm/build/dist/lib"
+#define COMPONENT_DLL_INSTALL_DIR "/home/moshikh/tmp/pymm/build/dist/lib"

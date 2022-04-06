@@ -27,11 +27,12 @@ libraries (e.g., scikit-learn) really easy.
 ```
 
 ## Install PyMM
+Build default is Optimized. Use --debug for debug mode.
 ```
-python setup.py install
+python setup.py
 ```
 
-For more installation detailes: [PyMM_BUILD](./info/PyMM_Build.md)
+For more installation detailes: [BUILD_PyMM](./info/build_PyMM.md)
 
 
 ## Docker hub container image
