@@ -18,43 +18,23 @@ domain.  In future releases, we hope to extend this to Apache Arrow,
 and panda dataframes-like data types.  We aim to make using persistent memory with existing
 libraries (e.g., scikit-learn) really easy.
 
+# Installation
 
-## How to build
+## 
 
-Upadte submodels:
-```bash
-git submodule update --init --recursive
+## Install Dependencies
+```
+./deps/install-<Your-OS-Version>.sh
+./deps/install-python-deps.sh
 ```
 
-Run dependencies for your OS
+## Install PyMM
 ```
-cd deps
-./install-<Your-OS-Version>.sh
-./install-python-deps.sh
-cd ../
+python setup.py install
 ```
 
-Create Build directory:
-```bash
-mkdir build
-cd build
-```
+For more installation detailes: [PyMM_BUILD](./info/PyMM_Build.md)
 
-Configure as debug build:
-```bash
-cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. 
-```
-
-Build bootstrap libraries:
-```bash
-make bootstrap
-```
-
-Build everything else (-j optional for parallel build):
-
-```
-make -j install
-```
 
 ## Docker hub container image
 A pre-complie pymm with the latest version:
@@ -68,7 +48,7 @@ docker run -it -v /mnt/pmem0:/mnt/pmem0 moshik1/pymm:tag
 ```
 
 
-## Getting Started
+# Getting Started
 
 PyMM is based on Python 3.6 or later.  We use site-local package installs to avoid
 conflicts with existing system-wide installed libraries.  At minimum,
