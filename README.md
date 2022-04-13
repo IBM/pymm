@@ -18,49 +18,28 @@ domain.  In future releases, we hope to extend this to Apache Arrow,
 and panda dataframes-like data types.  We aim to make using persistent memory with existing
 libraries (e.g., scikit-learn) really easy.
 
+# Installation
 
-## How to build
-
-Upadte submodels:
-```bash
-git submodule update --init --recursive
+## Install Dependencies
+```
+./deps/install-<Your-OS-Version>.sh
+./deps/install-python-deps.sh
 ```
 
-Run dependencies for your OS
+## Install PyMM
+Build default is Optimized. Use --debug for debug mode.
 ```
-cd deps
-./install-<Your-OS-Version>.sh
-./install-python-deps.sh
-cd ../
+python setup.py
 ```
 
-Create Build directory:
-```bash
-mkdir build
-cd build
-```
+For more installation detailes: [BUILD_PyMM](./info/build_PyMM.md)
 
-Configure as debug build:
-```bash
-cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. 
-```
-
-Build bootstrap libraries:
-```bash
-make bootstrap
-```
-
-Build everything else (-j optional for parallel build):
-
-```
-make -j install
-```
 
 ## Docker hub container image
 A pre-complie pymm with the latest version:
 https://hub.docker.com/repository/docker/moshik1/pymm
 
-### Docker run command
+#### Docker run command
 In the docker run command, you should add a volume mount point that the shelf will run on.
 In this example, we are using "/mnt/pmem0" for FS-DAX, but you can also use any other mount point. 
 ```
@@ -68,7 +47,7 @@ docker run -it -v /mnt/pmem0:/mnt/pmem0 moshik1/pymm:tag
 ```
 
 
-## Getting Started
+# Getting Started
 
 PyMM is based on Python 3.6 or later.  We use site-local package installs to avoid
 conflicts with existing system-wide installed libraries.  At minimum,
@@ -92,7 +71,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 ```
 
 
-## Persistent Shelf Abstraction
+### Persistent Shelf Abstraction
 
 PyMM allows the programmer to easily define what type of memory (i.e.,
 volatile or persistent) a variable should be assigned to.  This is
@@ -138,7 +117,7 @@ easily recovered.  This is a topic of future work.
 If you are using a devdax persistent memory partition, you can use the DAX_RESET=1
 environment variable to reset and clear the pool.
 
-## Shelving Variables
+### Shelving Variables
 
 When a shelf is opened, any variables on it are immediately available.  There
 is no need for loading or de-serialization (e.g., unpickling).
@@ -250,7 +229,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> pymm.demo(True)
 ```
 
-## Supported Types
+### Supported Types
 
 Currently, only NumPy ndarray types can be put on a shelf.  Future work plans to look at
 supporting other types.
