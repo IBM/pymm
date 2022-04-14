@@ -64,9 +64,9 @@ def pymm_fs_dax_func(path):
     results = { "open_time": 0, "copy_time" : 0, "close_persist_time" : 0}
     path_split = os.path.split(path)
     t0 = time.time()
-#    s = pymm.shelf("tmp0",size_mb=200000,pmem_path="/mnt/pmem0/tmp0/")
-    s = pymm.shelf(path_split[1],size_mb=pymm_size_mb,pmem_path=path)
-    print(s.array)
+    s = pymm.shelf("tmp0",size_mb=200000,pmem_path="/mnt/pmem0/tmp0/")
+#    s = pymm.shelf(path_split[1],size_mb=pymm_size_mb,pmem_path=path)
+    print(s.get_item_names())
     results["open_time"] = time.time() - t0
     t0 = time.time()
     a = s.array[s.array>filter]
@@ -236,7 +236,7 @@ def set_args(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("size_GB", type=str, help="The data size in GB")
-    parser.add_argument("--remove_write", type=str, help="removing the data after write")
+    parser.add_argument("--no_remove", type=str, help="not remove the data after write")
     parser.add_argument("output_dir", type=str, help="where to store the results")
     parser.add_argument("--test_all", action="store_true", default=False, help="run all the different options")
     parser.add_argument("--numa_local", action="store_true", default=False, help="run all the different options")
