@@ -1,4 +1,8 @@
-![PyMM logo](https://raw.githubusercontent.com/IBM/pymm/moshik1-patch-1-4/.github/pymmlogo.png)
+
+
+<p align="center">
+  <img width="160" height="120" src="https://raw.githubusercontent.com/IBM/pymm/moshik1-patch-1-4/.github/pymmlogo.png">
+</p>
 
 # Python Micro-MCAS (PyMM)
 
