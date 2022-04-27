@@ -1,3 +1,9 @@
+
+
+<p align="center">
+  <img width="160" height="120" src="https://raw.githubusercontent.com/IBM/pymm/main/.github/pymmlogo.png">
+</p>
+
 # Python Micro-MCAS (PyMM)
 
 Micro-MCAS is the term we use to represent a local, network-less
