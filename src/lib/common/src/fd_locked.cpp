@@ -33,9 +33,9 @@ common::fd_locked::fd_locked(int fd_)
   : Fd_open(fd_)
 {
   /* Protection against using the same file in different processes */
-  if ( ::lockf(fd_, F_TLOCK, 0) != 0 )
-  {
-    auto e = errno;
-    throw std::runtime_error(std::string(__func__) + " exclusive lock failed: " + ::strerror(e));
-  }
+//  if ( ::lockf(fd_, F_TLOCK, 0) != 0 )
+//  {
+//    auto e = errno;
+//    throw std::runtime_error(std::string(__func__) + " exclusive lock failed: " + ::strerror(e));
+//  }
 }
