@@ -1,15 +1,33 @@
-In this blog I would like to intruduce you our new open-source python library called: PyMM (Python Memory Managment).
-This python library allows you to .....
+In this blog, I would like to introduce our new open-source python library called: PyMM (Python Memory Management).
+This python library makes it easy for a Python developer to use Persistent Memory (e.g., Intel Optane Non-Volatile DIMMs). 
+The approach brings persistent memory to existing data types, and we started with NumPy arrays and PyTorch tensors since
+they are both popular data types among data science.
+
+## Motivation 
+Persistent Memory in's early age and didn't reach its full potential. Most of the research and the adoptions for Optane are
+in two dimensions, databases and storage systems use the persistent mode for fault tolerance, fast recovery, and reduced battery cost.
+For the memory mode, the usage is by data science that needs enormous memory with static data.
+
+--------------| Memory Mode | Persistent Mode |
+data science  | V. | This Blog | 
+------------- | --- | --- |
+Databases/ Storage | few |  V
+
+
 
 This has great potinitail for data structure since.... 
+
 
 
 ## What is Persistent Memory:
 
 
 
+
+
 ## Benchmarking 
 
+We 
 
 
 
