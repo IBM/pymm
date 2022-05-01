@@ -1,4 +1,4 @@
-# PyMM
+# PyMM Usage
 
 In this blog, I would like to introduce our new open-source python library called: PyMM (Python Memory Management).
 This python library makes it easy for a Python developer to use Persistent Memory (e.g., Intel Optane Non-Volatile DIMMs). 
