@@ -1,22 +1,14 @@
-# Python Micro-MCAS (PyMM)
 
-Micro-MCAS is the term we use to represent a local, network-less
-instantiation of MCAS.  It can be somewhat viewed as an alternative to
-PMDK in that it provides software to manage the persistent memory
-space with name-based (key) regions of memory (value).  Micro-MCAS uses
-the persistent memory storage components (hstore, hstore-cc) from the 
-fuller MCAS solution.
 
-PyMM is Python software for using the Micro-MCAS capability.  The aim
-of PyMM is to make it very easy for a Python developer to get started
-with using persistent memory.  The approach is to bring persistent memory
-to *existing* data types that are understood by the broad array of libraries
-in the Python ecosystem.
+<p align="center">
+  <img width="160" height="120" src="https://raw.githubusercontent.com/IBM/pymm/main/pymm_logo.png">
+</p>
 
-To begin with, our focus is on the Numpy ndarray type and the data analytics application
-domain.  In future releases, we hope to extend this to Apache Arrow,
-and panda dataframes-like data types.  We aim to make using persistent memory with existing
-libraries (e.g., scikit-learn) really easy.
+# Python Memory Management (PyMM)
+
+Python Memory Management is a python library that makes it easy for a Python developer to get started using Persistent Memory (e.g., Intel Optane Non-Volatile DIMMs). The approach is to bring persistent memory to existing data types that are understood by the broad array of libraries in the Python ecosystem.
+
+To begin with, our focus is on the NumPy arrays and PyTorch tensors and the data analytics application domain. That allows storing and manipulating NumPy arrays and PyTorch tensors on Persistent Memory. The key benefit of PyMM is its ability to persistently store program variables without the need to serialize or de-serialize (e.g. pickle). Using PyMM, program variables are stored in logical groupings known as “shelves”, which inherently map to different memory resources in the system. Variables that exist on a shelf can be readily used with commonly used existing libraries including NumPy and PyTorch.  In future releases, we hope to extend this to Apache Arrow, and panda dataframes-like data types. 
 
 # Installation
 

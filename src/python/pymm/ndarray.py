@@ -25,7 +25,7 @@ from .memoryresource import MemoryResource
 from .shelf import Shadow, ShelvedCommon
 
 dtypedescr = np.dtype
-wbinvd_threshold = 1073741824
+wbinvd_threshold = 31457280 # above 30MB use wbinvd for persist, below that use CLFLUSHOPT
 
 # shadow type for ndarray
 #
