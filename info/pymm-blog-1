@@ -8,10 +8,10 @@ Persistent Memory in's early age and didn't reach its full potential. Most of th
 in two dimensions, databases and storage systems use the persistent mode for fault tolerance, fast recovery, and reduced battery cost.
 For the memory mode, the usage is by data science that needs enormous memory with static data.
 
---------------| Memory Mode | Persistent Mode |
-data science  | V. | This Blog | 
-------------- | --- | --- |
-Databases/ Storage | few |  V
+|  | Memory Mode  | Persistent Mode  |
+| ------- | --- | --- |
+| Data science | v | This Blog |
+ Database/ Storage Systems | few | v |
 
 
 
