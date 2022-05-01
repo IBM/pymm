@@ -57,8 +57,6 @@ Build:
 
 
 ## An How to create a Persistent Memory 
-### 
-
 
 
 ## How to emulate a persistent Memory 
