@@ -26,7 +26,7 @@ This has great potinitail for data science users since not all the data is stati
 We see potinital after benchmarking NumPy arrays of diffreant sizes: 
 1. Checkpointing and logging -  With PyMM on dax mode we see a checkpoint acceleration of almost x2. 
 2. Persist Random writes - persist random writes to Optane with PyMM is x3 times faster then writing to NVMe or writing to Optane with other options.
-3. Multi Process - PyMM allows many process to access the same pool of memory and can reduce the serlization cose of process access. 
+3. Huge data - when the data is huge it is better to use peristent memory then moving to numa node (?Maybe not in this blog?)
   
 
 ## Flush issue 
