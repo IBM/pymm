@@ -1,5 +1,3 @@
-# PyMM Usage
-
 In this blog, I would like to introduce our new open-source python library called: PyMM (Python Memory Management).
 This python library makes it easy for a Python developer to use Persistent Memory (e.g., Intel Optane Non-Volatile DIMMs). 
 The approach brings persistent memory to existing data types, and we started with NumPy arrays and PyTorch tensors since
@@ -37,9 +35,119 @@ two grphs:
 2. 10GB
 
 
-## How to start: 
+# Install PyMM
 
-Build: 
+### Dpendencies
+```
+./deps/install-<Your-OS-Version>.sh
+./deps/install-python-deps.sh
+```
+
+### Build PyMM
+Build default is Optimized. Use --debug for debug mode.
+```
+python setup.py
+```
+
+Once everything has been correctly installed, the pymm module can be loaded.
+
+```python
+>>> import pymm
+>>>
+```
+
+For more installation detailes: [BUILD_PyMM](./info/build_PyMM.md)
+
+
+### Docker hub container image
+There is also a pre-complie pymm with the latest version:
+https://hub.docker.com/repository/docker/moshik1/pymm
+
+#### Docker run command
+In the docker run command, you should add a volume mount point that the shelf will run on.
+In this example, we are using "/mnt/pmem0" for FS-DAX, but you can also use any other mount point. 
+```
+docker run -it -v /mnt/pmem0:/mnt/pmem0 moshik1/pymm:tag
+```
+
+# Usage
+
+## Persistent Shelf Abstraction
+
+PyMM allows the programmer to easily define what type of memory (i.e.,
+volatile or persistent) a variable should be assigned to.  This is
+achieved with the **shelf** abstraction.  Each shelf is associated
+with a MCAS memory pool.  For ease of management, we recommend setting
+up an fsdax persistent memory mount (e.g., /mnt/pmem0) - see [Notes on
+DAX](./MCAS_notes_on_dax.md).  This is where shelves will be created.
+
+Shelves are given a name and capacity (currently they cannot expand or
+contract). A shelf can be created as follows:
+
+```python
+>>> s = pymm.shelf('myShelf',size_mb=1024,pmem_path='/mnt/pmem0',force_new=True)
+```
+
+The last parameter, 'force_new', if set to True the call clears any existing
+pool and creates an entirely new allocation.  The 'pmem_path' parameter
+defines where the shelves are created.
+
+Normal re-opening of an existing shelf is performed with:
+
+```python
+>>> s = pymm.shelf('myShelf',size_mb=1024,pmem_path='/mnt/pmem0')
+```
+
+```bash
+$ ls -sh /mnt/pmem0
+total 1.1G
+1.0G myShelf.data  4.0K myShelf.map
+```
+
+Note, each shelf/pool results in a data file and metadata file (.map).  To
+erase a shelf, the corresponding files can be deleted through 'rm'.  If
+a shelf already exists, then the pymm.shelf construction will re-open 
+the existing shelf.
+
+Once a shelf has been created, variables can be "placed" on it.
+Shelved data is **durable** across process and machine restarts (as
+are flushed files on traditional storage).  Of course, if the machine
+homing the persistent memory resources fails, your data cannot be
+easily recovered.  This is a topic of future work.
+
+If you are using a devdax persistent memory partition, you can use the DAX_RESET=1
+environment variable to reset and clear the pool.
+
+## Shelving Variables
+
+When a shelf is opened, any variables on it are immediately available.  There
+is no need for loading or de-serialization (e.g., unpickling).
+
+To create a Numpy ndarray on the shelf, a pymm.ndarray data type is used.  The
+constructor parameters for this are identical to numpy.ndarray.  To create a variable
+*x* on the shelf, the following assignment is used:
+
+```python
+>>> import numpy as np
+>>> s.x = pymm.ndarray((1000,1000),dtype=np.int64)
+```
+
+This creates the ndarray in persistent memory and under-the-hood, stores the
+meta data so that the variable type is known on recovery.  Once created the
+array can be populated in place.  For example:
+
+```python
+>>> s.x[1][1] = 9 # explicit slice assignment
+>>> s.x.fill(3)   # in-place operation
+
+# load data from file
+>>> with open("array.dat", "rb") as source:
+        source.readinto(memoryview(s.x))
+```
+
+Shelved variables can be assigned as copies of non-shelved variables. In this 
+case, the right-hand-side is evaluated in DRAM before copying over to persistent
+memory.
 
 
 ## Basic commands 
