@@ -31,8 +31,8 @@ We see potinital after benchmarking NumPy arrays of diffreant sizes:
 
 We are showing somce instrsting results of running PyMM with : 
 two grphs: 
-1. 10GB 
-2. 10GB
+1. Write Sequance
+2. Persist Random Write
 
 
 # Install PyMM
@@ -70,7 +70,7 @@ In this example, we are using "/mnt/pmem0" for FS-DAX, but you can also use any 
 docker run -it -v /mnt/pmem0:/mnt/pmem0 moshik1/pymm:tag
 ```
 
-# Usage
+# simple Usage
 
 ## Persistent Shelf Abstraction
 
@@ -150,14 +150,8 @@ case, the right-hand-side is evaluated in DRAM before copying over to persistent
 memory.
 
 
-## Basic commands 
-
-### Open a shelf
-
-
-### Create a ... 
-
-
+## Examples
+I will add a few testing examples
 
 ## Flush  
 
@@ -183,7 +177,6 @@ To clear the dev_dax you should use the command DAX_RESET=1 before starting your
 DAX_RESET=1 python3 
 ```
  
-
 
 ## How to emulate a persistent Memory 
 The emulation of persistent memory on DRAM is voltile but it allows you to emulate persistent memory, it gives you way to access the same variables over and over and it is much faster then using tempfs. 
