@@ -29,10 +29,6 @@ We see potinital after benchmarking NumPy arrays of diffreant sizes:
 3. Huge data - when the data is huge it is better to use peristent memory then moving to numa node (?Maybe not in this blog?)
   
 
-## Flush issue 
-
-wbinvd 
-
 ## Benchmarking 
 
 We are showing somce instrsting results of running PyMM with : 
@@ -55,11 +51,36 @@ Build:
 
 
 
+## Flush  
+
+When using persistent memory the writes that are still in the cache and didn't flush to the PM can be vanished after a crash. 
+To make sure that the data is secure in the PM you need to flush the data. 
+We have persist function to FLUSH the data. for example: 
+```
+.persist()
+```
+
+In NumPy array you can use a persist_offset()
+
+We have a more advance method that can speed up the persistent when persist that are larger than 30MB. 
+For this use you need a sudo permission, you will have 
+
 
 ## An How to create a Persistent Memory 
 
+You can create Persistet Memory in two modes fs_dax and dev_dax. The advantage of dev_dax is the higher performance then fs_dax in .... . On the other hand, it is mush easier to with debug with fs_dax since there is a file system and it is easy to control the data. 
+
+To clear the dev_dax you should use the command DAX_RESET=1 before starting your program
+```
+DAX_RESET=1 python3 
+```
+ 
+
 
 ## How to emulate a persistent Memory 
+The emulation of persistent memory on DRAM is voltile but it allows you to emulate persistent memory, it gives you way to access the same variables over and over and it is much faster then using tempfs. 
+
+
 
 
 
