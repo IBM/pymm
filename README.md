@@ -6,42 +6,48 @@
 
 # Python Micro-MCAS (PyMM)
 
-Micro-MCAS is the term we use to represent a local, network-less
-instantiation of MCAS.  It can be somewhat viewed as an alternative to
-PMDK in that it provides software to manage the persistent memory
-space with name-based (key) regions of memory (value).  Micro-MCAS uses
-the persistent memory storage components (hstore, hstore-cc) from the 
-fuller MCAS solution.
+Python Memory Management is a python library that makes it easy for 
+a Python developer to get started using Persistent Memory
+ (e.g., Intel Optane Non-Volatile DIMMs). The approach is to bring
+ persistent memory to existing data types that are understood by the broad
+ array of libraries in the Python ecosystem.
 
-PyMM is Python software for using the Micro-MCAS capability.  The aim
-of PyMM is to make it very easy for a Python developer to get started
-with using persistent memory.  The approach is to bring persistent memory
-to *existing* data types that are understood by the broad array of libraries
-in the Python ecosystem.
+To begin with, our focus is on the NumPy arrays and PyTorch tensors and
+ the data analytics application domain. That allows storing and 
+manipulating NumPy arrays and PyTorch tensors on Persistent Memory.
+ The key benefit of PyMM is its ability to persistently store program 
+variables without the need to serialize or de-serialize (e.g. pickle).
+ Using PyMM, program variables are stored in logical groupings known as
+ “shelves”, which inherently map to different memory resources in the system.
+ Variables that exist on a shelf can be readily used with commonly used
+ existing libraries including NumPy and PyTorch. In future releases, 
+we hope to extend this to Apache Arrow, and panda dataframes-like data types.
 
-To begin with, our focus is on the Numpy ndarray type and the data analytics application
-domain.  In future releases, we hope to extend this to Apache Arrow,
-and panda dataframes-like data types.  We aim to make using persistent memory with existing
-libraries (e.g., scikit-learn) really easy.
+# Install PyMM
 
-# Installation
-
-## Install Dependencies
+### Dpendencies
 ```
 ./deps/install-<Your-OS-Version>.sh
 ./deps/install-python-deps.sh
 ```
 
-## Install PyMM
+### Build PyMM
 Build default is Optimized. Use --debug for debug mode.
 ```
 python setup.py
 ```
 
+Once everything has been correctly installed, the pymm module can be loaded.
+
+```python
+>>> import pymm
+>>>
+```
+
 For more installation detailes: [BUILD_PyMM](./info/build_PyMM.md)
 
 
-## Docker hub container image
+### Docker hub container image
 A pre-complie pymm with the latest version:
 https://hub.docker.com/repository/docker/moshik1/pymm
 
@@ -52,32 +58,7 @@ In this example, we are using "/mnt/pmem0" for FS-DAX, but you can also use any 
 docker run -it -v /mnt/pmem0:/mnt/pmem0 moshik1/pymm:tag
 ```
 
-
-# Getting Started
-
-PyMM is based on Python 3.6 or later.  We use site-local package installs to avoid
-conflicts with existing system-wide installed libraries.  At minimum,
-for the demo, the following should be installed:
-
-```bash
-pip3 install numpy --user -I
-pip3 install matplotlib --user -I
-pip3 install scikit-image --user -I
-```
-
-
-Once everything has been correctly installed, the pymm module can be loaded.
-
-```python
-Python 3.6.8 (default, Aug 18 2020, 08:33:21) 
-[GCC 8.3.1 20191121 (Red Hat 8.3.1-5)] on linux
-Type "help", "copyright", "credits" or "license" for more information.
->>> import pymm
->>>
-```
-
-
-### Persistent Shelf Abstraction
+## Persistent Shelf Abstraction
 
 PyMM allows the programmer to easily define what type of memory (i.e.,
 volatile or persistent) a variable should be assigned to.  This is
@@ -123,7 +104,7 @@ easily recovered.  This is a topic of future work.
 If you are using a devdax persistent memory partition, you can use the DAX_RESET=1
 environment variable to reset and clear the pool.
 
-### Shelving Variables
+## Shelving Variables
 
 When a shelf is opened, any variables on it are immediately available.  There
 is no need for loading or de-serialization (e.g., unpickling).
@@ -193,7 +174,7 @@ Alternatively:
 ['__class__', '__del__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattr__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'erase', 'get_item_names', 'mr', 'name', 'x', 'y']
 ```
 
-### Usage
+## Usage
 
 You can get the current memory usage (as a percent of the memory resources) as follows:
 
@@ -202,7 +183,7 @@ You can get the current memory usage (as a percent of the memory resources) as f
 6
 ```
 
-### References 
+## References 
 
 Volatile references can be used to access shelved data.  References cannot themselves be
 put on a shelf:
@@ -235,7 +216,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> pymm.demo(True)
 ```
 
-### Supported Types
+## Supported Types
 
 Currently, only NumPy ndarray types can be put on a shelf.  Future work plans to look at
 supporting other types.
