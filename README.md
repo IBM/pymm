@@ -4,7 +4,7 @@
   <img width="160" height="120" src="https://raw.githubusercontent.com/IBM/pymm/main/pymm_logo.png">
 </p>
 
-# Python Micro-MCAS (PyMM)
+# Python Memory Management (PyMM)
 
 Python Memory Management is a python library that makes it easy for 
 a Python developer to get started using Persistent Memory
