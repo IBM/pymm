@@ -23,14 +23,14 @@ def build_pymm(args):
     print ("move to build directory")
     os.chdir('build')
    
+    flags = 'Release'
     if (args.debug):
         flags = 'DEBUG'
-    else:    
-        flags = 'Release'
-
-    print("cmake -DCMAKE_BUILD_TYPE=" + flags + "-DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist ..")
-    os.system("cmake -DCMAKE_BUILD_TYPE=" + flags + "-DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. ")
     
+    print("cmake -DCMAKE_BUILD_TYPE=" + flags + " -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist ..")
+    command = "cmake -DCMAKE_BUILD_TYPE=" + flags + " -DCMAKE_INSTALL_PREFIX:PATH=" + os.getcwd() + "/dist .."
+    print (command)
+    os.system(command)
     print("make bootstrap")
     os.system("make bootstrap")
     
