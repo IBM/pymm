@@ -17,6 +17,16 @@ Optane DC main attributes are:
 - Being on the memory-bus allows caching in the CPU similar to DRAM with cache coherance for multi process. 
 - The maximun capacity one Optane DC DIMM is 512GB which is x8 larger than curreant DDR4 DRAM and in one serevr we can reach up to 6TB.
 
+### Optane DC modes
+Optane can configurate in two modes:
+#### Memory Mode
+
+#### Persistent Mode 
+
+##### Device DAX (DEVDAX)
+
+##### FS-DAX 
+
 ## Motivation 
 Persistent Memory in's early age and didn't reach its full potential. Most of the research and the adoptions for Optane are
 in two dimensions, databases and storage systems use the persistent mode for fault tolerance, fast recovery, and reduced battery cost.
@@ -39,10 +49,15 @@ We see potinital after benchmarking NumPy arrays of diffreant sizes:
 
 ## Benchmarking 
 
-We are showing somce instrsting results of running PyMM with : 
+We are showing an instrsting results when writeing data to PM: 
 two grphs: 
-1. Write Sequance
+1. Checkpointing. 
+ 
+2. Copy data. 
 
+3. Persistent Random Write: 
+
+* For more detailes pleaase see this arXiv paper: 
 
 
 # Install PyMM
@@ -184,20 +199,59 @@ You can create Persistet Memory in two modes fs_dax and dev_dax. The advantage o
 
 To clear the dev_dax you should use the command DAX_RESET=1 before starting your program
 ```
-DAX_RESET=1 python3 
+> DAX_RESET=1
+>
 ```
- 
+
 
 ## How to emulate a persistent Memory 
-The emulation of persistent memory on DRAM is voltile but it allows you to emulate persistent memory, it gives you way to access the same variables over and over and it is much faster then using tempfs. 
+The emulation of persistent memory on DRAM is voltile but it allows you to emulate persistent memory, it gives you way to access the same variables over and over similar to tmpfs. 
 
+```
+sudo grubby --args="memmap=60G\!12G" --update-kernel=ALL
+```
 
+```
+> cat /etc/default/grub
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL_OUTPUT="console"
+GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
+GRUB_DISABLE_RECOVERY="true"
+GRUB_ENABLE_BLSCFG=true
+GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
+GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
+GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
+GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
+GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
+```
 
+```
+sudo reboot
+```
 
+```
+> lsblk /dev/pmem2
+NAME  MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+pmem2 259:4    0   60G  0 disk /mnt/mem
+```
+
+Create an emulated FS-DAX
+```
+sudo mkfs.ext4 /dev/pmem2
+sudo mount -o dax /dev/pmem2 /mnt/mem/
+sudo chmod 777 /mnt/mem/
+```
+
+Create an emulated DEVDAX
+```
+sudo ndctl create-namespace -e namespace2.0 -m devdax --align 2M  --force
+```
 
 ## More reading staff:
 PyMM paper: 
 
-ArXiv Ppaper:  
 
 
