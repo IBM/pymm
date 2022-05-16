@@ -197,6 +197,44 @@ For this use you need a sudo permission, you will have
 
 You can create Persistet Memory in two modes fs_dax and dev_dax. The advantage of dev_dax is the higher performance then fs_dax in .... . On the other hand, it is mush easier to with debug with fs_dax since there is a file system and it is easy to control the data. 
 
+### Persistent Mode
+#### FS_DAX
+```
+$ echo "create FS_DAX 0 in namespace0.0 "
+$ sudo ndctl list
+$ sudo ndctl destroy-namespace namespace0.0 -f
+$ sudo mkdir /mnt/pmem0
+$ sudo ndctl create-namespace -m fsdax -e namespace0.0 --align 2M --size 405874409472 --force
+$ sudo mkfs -t ext4 /dev/pmem0
+$ sudo mount -o dax /dev/pmem0 /mnt/pmem0
+$ sudo chmod a+rwx /mnt/pmem0
+```
+#### DEVDAX
+```
+echo "create DEV_DAX 0 in namespace0.1 "
+sudo ndctl list
+sudo ndctl destroy-namespace namespace0.1 -f
+sudo ndctl create-namespace -m devdax -e namespace0.1 --size 405874409472 --align 2M --force
+sudo chmod go+rw /dev/dax0.1
+```
+For more detailes: 
+link:
+
+script that create 4 PM disks: 2 FS-DAX and 2 DEVDEAX, each on each socket:
+link: 
+
+
+#### Memory Mode
+
+— You might need to remove  existing namespace
+sudo ndctl destroy-namespace namespace0.0 -f
+
+
+sudo ipmctl create -goal MemoryMode=100
+sudo ipmctl show -memoryresources
+https://docs.pmem.io/ipmctl-user-guide/provisioning/create-memory-allocation-goal
+
+You can conf a hybrid of Memory mode and Persistent mode
 
 
 ### Clear DEVDAX
