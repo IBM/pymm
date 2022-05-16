@@ -6,6 +6,16 @@ they are both popular data types among data science.
 
 ## What is Persistent Memory:
 
+Persistent Memory is a term for device that resides on the memory bus and has high throughput, low latency(under 1 micro-sec) and non-voltility, which means that the data stays on the device after system crash, in contarary to DRAM that is volatile.  
+
+The idea beyond this device is to close the gap between SSD Flash Drive and DRAM. In 2019, Intel launched its Intel 3D XPoint DIMMs (also known as Optane DC persistent memory modules), which is current dominant solution, 
+Optane DC main attributes are:
+- Data is persist after power loss similar to SSD Flash and in contaray to DRAM that the data is lost after power loss.  
+- Provides access latencies that is two order of magnitute less than NVMe (SSD Flash drive) devices, but the latency of read/write is x3-5 times slower than DRAM.  
+- The throughput is more than NVMe but less than DRAM.
+- Suppose to be x2 cheaper than DRAM but order of madnitude expensive than NVMe.   
+- Being on the memory-bus allows caching in the CPU similar to DRAM with cache coherance for multi process. 
+- The maximun capacity one Optane DC DIMM is 512GB which is x8 larger than curreant DDR4 DRAM and in one serevr we can reach up to 6TB.
 
 ## Motivation 
 Persistent Memory in's early age and didn't reach its full potential. Most of the research and the adoptions for Optane are
@@ -32,7 +42,7 @@ We see potinital after benchmarking NumPy arrays of diffreant sizes:
 We are showing somce instrsting results of running PyMM with : 
 two grphs: 
 1. Write Sequance
-2. Persist Random Write
+
 
 
 # Install PyMM
@@ -151,7 +161,7 @@ memory.
 
 
 ## Examples
-I will add a few testing examples
+..........TBD...... 
 
 ## Flush  
 
