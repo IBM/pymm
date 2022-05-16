@@ -234,11 +234,14 @@ Then reboot the machine to update the kernel
 sudo reboot
 ```
 
+On my machine since I have already two PM DIMMS it creates amn emulated disk, pmem2.
+If you don't have any PM, the kernel will creates it as pmem0.
 This command will show you that there is a new disk
 ```
-> lsblk /dev/pmem2
-NAME  MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
-pmem2 259:4    0   60G  0 disk /mnt/mem
+[moshikh@sg-pmem2 ~]$ lsblk
+NAME                    MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+...
+pmem2                   259:4    0     4G  0 disk /mnt/mem
 ```
 
 Create an emulated FS-DAX
@@ -252,6 +255,9 @@ Create an emulated DEVDAX
 ```
 sudo ndctl create-namespace -e namespace2.0 -m devdax --align 2M  --force
 ```
+
+more reading: https://pmem.io/blog/2016/02/how-to-emulate-persistent-memory/
+https://pmem.io/knowledgebase/howto/100000012-how-to-emulate-persistent-memory-using-the-linux-memmapkernel-option/
 
 ## More reading staff:
 PyMM paper: 
