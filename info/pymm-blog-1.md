@@ -199,20 +199,22 @@ You can create Persistet Memory in two modes fs_dax and dev_dax. The advantage o
 
 To clear the dev_dax you should use the command DAX_RESET=1 before starting your program
 ```
-> DAX_RESET=1
->
+$ DAX_RESET=1
 ```
 
 
 ## How to emulate a persistent Memory 
-The emulation of persistent memory on DRAM is voltile but it allows you to emulate persistent memory, it gives you way to access the same variables over and over similar to tmpfs. 
+The emulation of persistent memory on DRAM is voltile but it allows you to emulate persistent memory. It uses a kernel ability to create a emulate persistent memory space on your DRAM. 
 
+In linux distribution REDHAT or FEDORA, change the kernel using this task.
+In this example we emulate 60GB start from offset 12GB.    
 ```
 sudo grubby --args="memmap=60G\!12G" --update-kernel=ALL
 ```
 
+To see the changes in the config file, please use this command.   
 ```
-> cat /etc/default/grub
+$ cat /etc/default/grub
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
 GRUB_DEFAULT=saved
@@ -227,11 +229,12 @@ GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
 GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
 GRUB_CMDLINE_LINUX="rd.driver.blacklist=nouveau memmap=60G!12G"
 ```
-
+Then reboot the machine to update the kernel
 ```
 sudo reboot
 ```
 
+This command will show you that there is a new disk
 ```
 > lsblk /dev/pmem2
 NAME  MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
