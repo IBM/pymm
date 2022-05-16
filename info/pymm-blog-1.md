@@ -197,6 +197,9 @@ For this use you need a sudo permission, you will have
 
 You can create Persistet Memory in two modes fs_dax and dev_dax. The advantage of dev_dax is the higher performance then fs_dax in .... . On the other hand, it is mush easier to with debug with fs_dax since there is a file system and it is easy to control the data. 
 
+
+
+### Clear DEVDAX
 To clear the dev_dax you should use the command DAX_RESET=1 before starting your program
 ```
 $ DAX_RESET=1
@@ -256,7 +259,7 @@ Create an emulated DEVDAX
 sudo ndctl create-namespace -e namespace2.0 -m devdax --align 2M  --force
 ```
 
-more reading: https://pmem.io/blog/2016/02/how-to-emulate-persistent-memory/
+Links for emulated PM: https://pmem.io/blog/2016/02/how-to-emulate-persistent-memory/
 https://pmem.io/knowledgebase/howto/100000012-how-to-emulate-persistent-memory-using-the-linux-memmapkernel-option/
 
 ## More reading staff:
