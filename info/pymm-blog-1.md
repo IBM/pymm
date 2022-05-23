@@ -1,5 +1,7 @@
 # Title: Accelerating Fault tolerant for Python Users with Persistent memory
 
+---- logo ---- 
+
 In this blog, I would like to introduce our new open-source python library called: PyMM (Python Memory Management).
 This python library makes it easy for a Python developer to use Persistent Memory (e.g., Intel Optane Non-Volatile DIMMs). 
 The approach brings persistent memory to existing data types, and we started with NumPy arrays and PyTorch tensors since
@@ -28,14 +30,28 @@ Optane DC's main attributes are:
 - The maximum capacity of one Optane DC DIMM is 512GB which is x8 larger than the current DDR4 DRAM and in one server, we can reach up to 6TB.
 
 ### Optane DC modes
-Optane can configurate in two modes:
+Optane can configurate in two modes: 
+The first mode can be configured to act persistently, called App Direct Mode. The second mode is volatile and called Memory
+Mode. In our blog we intersting in the persistent Mode. 
+
+
 #### Memory Mode
+In Memory Mode, Optane DC  is volatile and can be accessed through DRAM cache misses. Optane is used as a lower layer than DRAM and its
+usage is for programs that need larger DRAM. 
 
-#### Persistent Mode 
+#### Persistent Mode - App Direct 
+In this mode, the data in Optane is persistent, which means that the data saves upon crash. 
+Optane DC can be accessed through two settings: Direct Access (DevDax) or
+Filesystem Direct Access (FS-DAX). 
 
-##### Device DAX (DevDAX)
 
 ##### FS-DAX 
+In this mode Optane is mounted like a standart filesystem. This mode is slightly slower but it is much easier for debugging.
+
+##### Device DAX (DevDAX)
+In this mode Optane DC can only be accessed through the kernel mode as an object store, it is faster but hard to debug. 
+Python users that the wish to leverage there program with DevDAX need to use PyMM.  
+
 
 ## Motivation 
 
