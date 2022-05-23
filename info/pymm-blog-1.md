@@ -1,23 +1,22 @@
-# Title: Data science with Persistent memory
+# Title: Accelerating Fault tolerant for Python Users with Persistent memory
 
 In this blog, I would like to introduce our new open-source python library called: PyMM (Python Memory Management).
 This python library makes it easy for a Python developer to use Persistent Memory (e.g., Intel Optane Non-Volatile DIMMs). 
 The approach brings persistent memory to existing data types, and we started with NumPy arrays and PyTorch tensors since
-they are both popular data types among data science.
-
+they are both popular data types among data science users.
 
 ## What is Persistent Memory:
 
-Persistent Memory is a term for device that resides on the memory bus and has high throughput, low latency(under 1 micro-sec) and non-voltility, which means that the data stays on the device after system crash, in contarary to DRAM that is volatile.  
+Persistent Memory is a term for a device that resides on the memory bus and has high throughput, low latency(under one micro-sec), and non-volatility. The data stays on the device after a system crash in contrary to DRAM, which is volatile.  
 
-The idea beyond this device is to close the gap between SSD Flash Drive and DRAM. In 2019, Intel launched its Intel 3D XPoint DIMMs (also known as Optane DC persistent memory modules), which is current dominant solution, 
-Optane DC main attributes are:
-- Data is persist after power loss similar to SSD Flash and in contaray to DRAM that the data is lost after power loss.  
-- Provides access latencies that is two order of magnitute less than NVMe (SSD Flash drive) devices, but the latency of read/write is x3-5 times slower than DRAM.  
+The idea beyond this device is to close the gap between SSD Flash Drive and DRAM. In 2019, Intel launched its Intel 3D XPoint DIMMs (also known as Optane DC persistent memory modules), which is the current dominant solution, 
+Optane DC's main attributes are:
+- Data persists after power loss, similar to SSD Flash and contrary to DRAM, where the data is lost after power loss.  
+- Provides access latency which is two orders of magnitude less than NVMe (SSD Flash drive) devices, but the latency of read/write is x3-5 times slower than DRAM.  
 - The throughput is more than NVMe but less than DRAM.
-- Suppose to be x2 cheaper than DRAM but order of madnitude expensive than NVMe.   
-- Being on the memory-bus allows caching in the CPU similar to DRAM with cache coherance for multi process. 
-- The maximun capacity one Optane DC DIMM is 512GB which is x8 larger than curreant DDR4 DRAM and in one serevr we can reach up to 6TB.
+- Suppose to be x2 cheaper than DRAM but order of magnitude expensive than NVMe.   
+- Being on the memory bus allows caching in the CPU similar to DRAM with cache coherence for multi-process. 
+- The maximum capacity of one Optane DC DIMM is 512GB which is x8 larger than the current DDR4 DRAM and in one server, we can reach up to 6TB.
 
 ### Optane DC modes
 Optane can configurate in two modes:
@@ -42,7 +41,7 @@ For the memory mode, the usage is by data science that needs enormous memory wit
 
 
 
-We see a great potinitail for data science users, in the sense of Falut tollerent.
+We see great potential for data science users in the sense of Fault tolerance.
 
 ### Fault tollerent
 
