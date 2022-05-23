@@ -51,9 +51,14 @@ sensitive to program faults or unexpected system crashes, which can erase hours 
 
 We will see one use case:
 #### Checkpointing 
-The most popular strategy in machine learning is checkpointing, where periodically saving the state of the model to persistent
-storage. 
+The most popular strategy for falut tollerent in machine learning is checkpointing, where periodically the model state is saved to persistent
+storage and if the system crashed, the algorithm can return to its last checkpointing. 
 
+In our syntetic benchmark of checkpoiting 10GB of NumPy array, we see that checkpoint using PyMM in DevDAX mode, you can save almost half the time to checkpoint to NVMe, which is 3.5sec. Assume that in your machine learning algorithm you have 10000 epochs, you save 10 hours just by saving to PM instead of NVMe. 
+
+Two pic:
+2b
+3b
 
 
 
@@ -77,19 +82,6 @@ balancing two operations: how often a checkpoint is made (the checkpointing8
 schedule), and the cost of creating a checkpoint itself.
   
   
-
-## Benchmarking 
-
-We are showing an instrsting results when writeing data to PM: 
-two grphs: 
-1. Checkpointing. 
- 
-2. Copy data. 
-
-3. Persistent Random Write: 
-
-* For more detailes pleaase see this arXiv paper: 
-
 
 # Install PyMM
 
@@ -206,8 +198,6 @@ case, the right-hand-side is evaluated in DRAM before copying over to persistent
 memory.
 
 
-## Examples
-..........TBD...... 
 
 ## Flush  
 
@@ -229,7 +219,6 @@ For this use you need a sudo permission, you will have
 You can create Persistet Memory in two modes fs_dax and dev_dax. The advantage of dev_dax is the higher performance then fs_dax in .... . On the other hand, it is mush easier to with debug with fs_dax since there is a file system and it is easy to control the data. 
 
 ### Persistent Mode
-#### FS_DAX
 ```
 $ echo "create FS_DAX 0 in namespace0.0 "
 $ sudo ndctl list
@@ -240,7 +229,7 @@ $ sudo mkfs -t ext4 /dev/pmem0
 $ sudo mount -o dax /dev/pmem0 /mnt/pmem0
 $ sudo chmod a+rwx /mnt/pmem0
 ```
-#### DEVDAX
+#### DevDAX
 ```
 echo "create DEV_DAX 0 in namespace0.1 "
 sudo ndctl list
@@ -332,7 +321,8 @@ Links for emulated PM: https://pmem.io/blog/2016/02/how-to-emulate-persistent-me
 https://pmem.io/knowledgebase/howto/100000012-how-to-emulate-persistent-memory-using-the-linux-memmapkernel-option/
 
 ## More reading staff:
-PyMM paper: 
+PyMM paper: https://dl.acm.org/doi/10.1145/3477113.3487266
+
 
 
 
