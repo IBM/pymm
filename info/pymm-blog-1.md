@@ -13,6 +13,8 @@ This python library makes it easy for a Python developer to use Persistent Memor
 The approach brings persistent memory to existing data types, and we started with NumPy arrays and PyTorch tensors since
 they are both popular data types among data science users.
 
+We think there is much room for innovation and research in this area of the intersection between data science and Persistent Memory. 
+
 In this blog, you can find:
 1. What is Persistent Memory 
 2. The potential of Persistent Memory - we only scratch the surface. 
@@ -52,11 +54,12 @@ Filesystem Direct Access (FS-DAX).
 
 
 ##### FS-DAX 
-In this mode Optane is mounted like a standart filesystem. This mode is slightly slower but it is much easier for debugging.
+In this mode Optane is mounted like a standart filesystem. This storage is visible as block device files "/dev/pmem*", and thus
+eventhough it is slightly slower than DevDAX it is much easier for debugging.
 
 ##### Device DAX (DevDAX)
 In this mode Optane DC can only be accessed through the kernel mode as an object store, it is faster but hard to debug. 
-Python users that the wish to leverage there program with DevDAX need to use PyMM.  
+Python users that wishes to leverage there program with DevDAX need to use PyMM.  
 
 
 ## Motivation 
