@@ -209,18 +209,24 @@ An alternative instruction, WBINVD (write-back invalidate), invalidates the enti
 Essentially, cache line flushing is a more fine-grained solution: it is designed to handle the case where specific cache lines must be written to the device, while WBINVD moves the entire cache at once. Therefore, there exists a phase transition: when the amount of data being written is small enough, cache line flushing should provide faster write times, while if the data is large enough, WBINVD is the preferable option. 
 Note, that WBINVD requires root privileges and is aggressive: 
 it invalidates the cache for the entire CPU, potentially slowing down other processes or threads (it is not viable for multi-tenant scenarios).
+To start working with wbinvd, you need to compile it first. For more details, please see here:
+https://github.com/IBM/pymm/tree/main/tools/wbinvd
 
 
-
-We have persist function to FLUSH the data. for example: 
+In PyMM we have a persist function to each data type. After the persist() call,
+the shelf variable is persist on the device
+We have two typess of persist functions: 
+- Persist the full variable
 ```
-.persist()
+s.x.persist()
 ```
 
-In NumPy array you can use a persist_offset()
-
-We have a more advance method that can speed up the persistent when persist that are larger than 30MB. 
-For this use you need a sudo permission, you will have 
+- A persist function that persist just a subset of the variable. 
+You can use the function ".perist_offset()" that 
+persist the variable from an offset with a spesific size.  
+```
+s.x.persist_offset(offset, size)
+```
 
 
 ## An How to create a Persistent Memory 
