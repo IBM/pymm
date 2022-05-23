@@ -33,7 +33,7 @@ Optane can configurate in two modes:
 
 #### Persistent Mode 
 
-##### Device DAX (DEVDAX)
+##### Device DAX (DevDAX)
 
 ##### FS-DAX 
 
@@ -159,7 +159,7 @@ Once a shelf has been created, variables can be "placed" on it.
 Shelved data is **durable** across process and machine restarts (as
 are flushed files on traditional storage).  
 
-If you are using a devdax persistent memory partition, you can use the DAX_RESET=1
+If you are using a DevDAX persistent memory partition, you can use the DAX_RESET=1
 environment variable to reset and clear the pool.
 
 ## Shelving Variables
@@ -272,7 +272,7 @@ https://docs.pmem.io/ipmctl-user-guide/provisioning/create-memory-allocation-goa
 You can conf a hybrid of Memory mode and Persistent mode
 
 
-### Clear DEVDAX
+### Clear DevDAX
 To clear the dev_dax you should use the command DAX_RESET=1 before starting your program
 ```
 $ DAX_RESET=1
@@ -327,7 +327,7 @@ sudo mount -o dax /dev/pmem2 /mnt/mem/
 sudo chmod 777 /mnt/mem/
 ```
 
-Create an emulated DEVDAX
+Create an emulated DevDAX
 ```
 sudo ndctl create-namespace -e namespace2.0 -m devdax --align 2M  --force
 ```
