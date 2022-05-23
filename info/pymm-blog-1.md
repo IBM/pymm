@@ -1,3 +1,5 @@
+# Title: Data science with Persistent memory
+
 In this blog, I would like to introduce our new open-source python library called: PyMM (Python Memory Management).
 This python library makes it easy for a Python developer to use Persistent Memory (e.g., Intel Optane Non-Volatile DIMMs). 
 The approach brings persistent memory to existing data types, and we started with NumPy arrays and PyTorch tensors since
@@ -28,7 +30,8 @@ Optane can configurate in two modes:
 ##### FS-DAX 
 
 ## Motivation 
-Persistent Memory in's early age and didn't reach its full potential. Most of the research and the adoptions for Optane are
+
+Persistent Memory is in its early age and didn't reach its full potential. Most of the research and the adoptions for Optane are
 in two dimensions, databases and storage systems use the persistent mode for fault tolerance, fast recovery, and reduced battery cost.
 For the memory mode, the usage is by data science that needs enormous memory with static data.
 
@@ -39,12 +42,40 @@ For the memory mode, the usage is by data science that needs enormous memory wit
 
 
 
+We see a great potinitail for data science users, in the sense of Falut tollerent.
 
-This has great potinitail for data science users since not all the data is static, there is also models and the training phase can last for hours.
-We see potinital after benchmarking NumPy arrays of diffreant sizes: 
-1. Checkpointing and logging -  With PyMM on dax mode we see a checkpoint acceleration of almost x2. 
-2. Persist Random writes - persist random writes to Optane with PyMM is x3 times faster then writing to NVMe or writing to Optane with other options.
-3. Huge data - when the data is huge it is better to use peristent memory then moving to numa node (?Maybe not in this blog?)
+### Fault tollerent
+
+Machine Learning models are expensive to train: they require expensive high compute and long training times. Therefore, models are extra
+sensitive to program faults or unexpected system crashes, which can erase hours if not days worth of work. Since PM is faster than native storage there is huge potintial to use it instead of NVMe. 
+
+We will see one use case:
+#### Checkpointing 
+The most popular strategy in machine learning is checkpointing, where periodically saving the state of the model to persistent
+storage. 
+
+
+
+
+
+### Other fault tollerent use cases
+
+We see in our benchmarking that persistent random write to NumPy array (which means that we persist after each write) is much faster with PyMM on PM than writing to FLASH SSD. We see here a potinial for on-line learning when you wish to persist your model after each change. 
+
+We see that writing directly from GPU to PM is just 20% slower than writing from GPU to CPU and your model can be persist.
+
+ 
+
+Machine Learning models are expensive to train: they require expensive high-1
+compute hardware and have long training times. Therefore, models are extra2
+sensitive to program faults or unexpected system crashes, which can erase hours if3
+not days worth of work. While there are plenty of strategies designed to mitigate the4
+risk of unexpected system downtime, the most popular strategy in machine learning5
+is called checkpointing: periodically saving the state of the model to persistent6
+storage. Checkpointing is an effective strategy, however, it requires carefully7
+balancing two operations: how often a checkpoint is made (the checkpointing8
+schedule), and the cost of creating a checkpoint itself.
+  
   
 
 ## Benchmarking 
