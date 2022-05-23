@@ -5,6 +5,15 @@ This python library makes it easy for a Python developer to use Persistent Memor
 The approach brings persistent memory to existing data types, and we started with NumPy arrays and PyTorch tensors since
 they are both popular data types among data science users.
 
+In this blog, you can find:
+1. What is Persistent Memory 
+2. The potential of Persistent Memory - we only scratch the surface. 
+3. How to install and use PyMM.
+4. How to create Persistent Memory and how to emulate one.
+
+We see a huge potential in this research area and will be glad for more contributors to our Open-Source. 
+
+
 ## What is Persistent Memory:
 
 Persistent Memory is a term for a device that resides on the memory bus and has high throughput, low latency(under one micro-sec), and non-volatility. The data stays on the device after a system crash in contrary to DRAM, which is volatile.  
@@ -45,15 +54,14 @@ We see great potential for data science users in the sense of Fault tolerance.
 
 ### Fault tollerent
 
-Machine Learning models are expensive to train: they require expensive high compute and long training times. Therefore, models are extra
-sensitive to program faults or unexpected system crashes, which can erase hours if not days worth of work. Since PM is faster than native storage there is huge potintial to use it instead of NVMe. 
+The training phase in machine learning models can take long time. Therefore, models wish to reduce the amount of data loss when having unexpected system crashes, which can erase hours of work. There is a huge potential in PM since it is faster than NVMe. 
 
 We will see one use case:
 #### Checkpointing 
-The most popular strategy for falut tollerent in machine learning is checkpointing, where periodically the model state is saved to persistent
-storage and if the system crashed, the algorithm can return to its last checkpointing. 
+The most popular strategy for fault tolerant in machine learning is checkpointing, where periodically, the model state is saved to persistent
+storage and if the system crashes, the algorithm can return to its last checkpointing. 
 
-In our syntetic benchmark of checkpoiting 10GB of NumPy array, we see that checkpoint using PyMM in DevDAX mode, you can save almost half the time to checkpoint to NVMe, which is 3.5sec. Assume that in your machine learning algorithm you have 10000 epochs, you save 10 hours just by saving to PM instead of NVMe. 
+In our synthetic benchmark of checkpointing 10GB of NumPy array, we see that checkpoint using PyMM in DevDAX mode can save almost half the time than checkpointing to NVMe, which is 3.5sec. Assume that in your machine learning algorithm, you have 10000 epochs. You save 10 hours just by saving to PM instead of NVMe. 
 
 Two pic:
 2b
@@ -62,25 +70,13 @@ Two pic:
 
 
 
-### Other fault tollerent use cases
+### Other fault tolerant use cases
 
-We see in our benchmarking that persistent random write to NumPy array (which means that we persist after each write) is much faster with PyMM on PM than writing to FLASH SSD. We see here a potinial for on-line learning when you wish to persist your model after each change. 
+We see in our benchmarking that persistent random write to NumPy array (which means that we persist after each write) is much faster with PyMM on PM than writing to FLASH SSD. We see a potential for online learning when you wish to persist your model after each change.  Maybe more detailes in our next blog.
 
-We see that writing directly from GPU to PM is just 20% slower than writing from GPU to CPU and your model can be persist.
-
+We see that writing directly from GPU to PM is just 20% slower than writing from GPU to CPU, and your model is on a persistent device.
  
-
-Machine Learning models are expensive to train: they require expensive high-1
-compute hardware and have long training times. Therefore, models are extra2
-sensitive to program faults or unexpected system crashes, which can erase hours if3
-not days worth of work. While there are plenty of strategies designed to mitigate the4
-risk of unexpected system downtime, the most popular strategy in machine learning5
-is called checkpointing: periodically saving the state of the model to persistent6
-storage. Checkpointing is an effective strategy, however, it requires carefully7
-balancing two operations: how often a checkpoint is made (the checkpointing8
-schedule), and the cost of creating a checkpoint itself.
-  
-  
+Copyind data ---- Maybe in our next blog  
 
 # Install PyMM
 
@@ -124,9 +120,12 @@ docker run -it -v /mnt/pmem0:/mnt/pmem0 moshik1/pymm:tag
 PyMM allows the programmer to easily define what type of memory (i.e.,
 volatile or persistent) a variable should be assigned to.  This is
 achieved with the **shelf** abstraction.  Each shelf is associated
-with a MCAS memory pool.  For ease of management, we recommend setting
-up an fsdax persistent memory mount (e.g., /mnt/pmem0) - see [Notes on
-DAX](./MCAS_notes_on_dax.md).  This is where shelves will be created.
+with a memory pool.  For ease of management, we recommend setting
+up an fsdax persistent memory mount (e.g., /mnt/pmem0).
+This is where shelves will be created.
+
+You can also open a persistent shelf on DevDax or volatile shelf on emulated PM  
+or even on tmpfs directory (from example: "/run")
 
 Shelves are given a name and capacity (currently they cannot expand or
 contract). A shelf can be created as follows:
@@ -158,9 +157,7 @@ the existing shelf.
 
 Once a shelf has been created, variables can be "placed" on it.
 Shelved data is **durable** across process and machine restarts (as
-are flushed files on traditional storage).  Of course, if the machine
-homing the persistent memory resources fails, your data cannot be
-easily recovered.  This is a topic of future work.
+are flushed files on traditional storage).  
 
 If you are using a devdax persistent memory partition, you can use the DAX_RESET=1
 environment variable to reset and clear the pool.
@@ -200,8 +197,21 @@ memory.
 
 ## Flush  
 
-When using persistent memory the writes that are still in the cache and didn't flush to the PM can be vanished after a crash. 
-To make sure that the data is secure in the PM you need to flush the data. 
+
+Optane DC communicates directly with the CPU cache and does not need DRAM as an intermediary layer.
+Therefore, when data is written to Optane DC, it requires its own policy for moving data from the cache to the device.
+There exist two mechanisms to eagerly write data to the device: cache line flushing and wbinvd. 
+Cache line flushing is a traditional flushing operation, which writes cache lines to the device and invalidates existing cache entries. 
+Cache line flushing is commonly implemented with CLFLUSHOPT or CLWB instructions.
+An alternative instruction, WBINVD (write-back invalidate), invalidates the entire cache and triggers the entire cache be moved to the device.
+
+
+Essentially, cache line flushing is a more fine-grained solution: it is designed to handle the case where specific cache lines must be written to the device, while WBINVD moves the entire cache at once. Therefore, there exists a phase transition: when the amount of data being written is small enough, cache line flushing should provide faster write times, while if the data is large enough, WBINVD is the preferable option. 
+Note, that WBINVD requires root privileges and is aggressive: 
+it invalidates the cache for the entire CPU, potentially slowing down other processes or threads (it is not viable for multi-tenant scenarios).
+
+
+
 We have persist function to FLUSH the data. for example: 
 ```
 .persist()
