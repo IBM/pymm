@@ -1,3 +1,7 @@
+At this blog the idea is that the reader will learn about the potntial of PyMM and be able to use it.
+
+The second blog will be dedecated to the benchmarking
+
 # Title: Accelerating Fault tolerant for Python Users with Persistent memory
 
 <p align="center">
