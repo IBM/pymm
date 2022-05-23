@@ -216,6 +216,19 @@ case, the right-hand-side is evaluated in DRAM before copying over to persistent
 memory.
 
 
+## Demo
+
+A simply demo is available (src/python/pymm/demo.py).  You will need matplotlib
+and scikit-image working for the demo (it will open a GUI dialog box).
+
+```python
+$ python3
+Python 3.6.8 (default, Aug 18 2020, 08:33:21) 
+[GCC 8.3.1 20191121 (Red Hat 8.3.1-5)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import pymm
+>>> pymm.demo(True)
+```
 
 ## Flush  
 
