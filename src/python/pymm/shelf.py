@@ -162,7 +162,17 @@ class shelf():
                         self.__dict__[varname] = value
                         print("Value '{}' has been made available on shelf '{}'!".format(varname, name))
                         continue
-                    
+
+                # type: pymm.dictionary (needs shelf)
+                elif (stype == DataType_Dictionary):
+                    (existing, value) = pymm.dictionary.existing_instance(self, varname)
+                    if existing == True:
+                        self.__dict__[varname] = value
+                        print("Value '{}' has been made available on shelf '{}'!".format(varname, name))
+                        continue
+
+
+
                 print("Value '{}' is unknown type!".format(varname))
 
 
@@ -220,6 +230,11 @@ class shelf():
             # pass shelf itself as param
             self.__dict__[name] = value.make_instance(self, name)
             print("made instance '{}' on shelf".format(name))
+        elif isinstance(value, pymm.dictionary):
+            # pass shelf itself as param
+            self.__dict__[name] = value.make_instance(self, name)
+            print("made instance '{}' on shelf".format(name))
+    
         elif isinstance(value, numpy.ndarray): # perform a copy instantiation (ndarray)
             self.__dict__[name] = pymm.ndarray.build_from_copy(self.mr, name, value)
             print("made ndarray instance from copy '{}' on shelf".format(name))

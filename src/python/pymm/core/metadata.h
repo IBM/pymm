@@ -40,6 +40,7 @@ extern "C" {
   static constexpr uint32_t DataType_TorchTensor   = 11;
   static constexpr uint32_t DataType_DLTensor      = 12;
   static constexpr uint32_t DataType_LinkedList    = 23;
+  static constexpr uint32_t DataType_Dictionary    = 24;
 
   static constexpr uint32_t DataSubType_None     = 0;
   static constexpr uint32_t DataSubType_Ascii    = 10;

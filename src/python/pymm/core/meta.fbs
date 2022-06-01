@@ -10,6 +10,7 @@ enum DataType : uint16 {
   NumberFloat   = 21,
   NumberInteger = 22,
   LinkedList    = 23,
+  Dictionary    = 24,
   ThisIsPyMM    = 100,
 }
 

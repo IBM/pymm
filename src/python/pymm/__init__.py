@@ -23,6 +23,7 @@ from .float_number import float_number
 from .integer_number import integer_number
 from .bytes import bytes
 from .linkedlist import linked_list
+from .dictionary import dictionary
 
 
 from .shelf import shelf

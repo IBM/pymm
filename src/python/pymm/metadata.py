@@ -120,6 +120,7 @@ DataType_NumPyArray    = int(10)
 DataType_TorchTensor   = int(11)
 DataType_DLTensor      = int(12)
 DataType_LinkedList    = int(23)
+DataType_Dictionary     = int(24)
 
 DataSubType_None   = int(0)
 DataSubType_Ascii  = int(10)
