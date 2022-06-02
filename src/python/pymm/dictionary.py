@@ -142,7 +142,7 @@ class shelved_dictionary(ShelvedCommon):
 
             self._metadata_named_memory = memref
 
-            self._internal = pymmcore.List(buffer=self._value_named_memory.buffer, rehydrate=False)
+            self._internal = pymmcore.Dict(buffer=self._value_named_memory.buffer, rehydrate=False)
 
         else:
             # validates
@@ -151,7 +151,7 @@ class shelved_dictionary(ShelvedCommon):
             self._metadata_named_memory = memref
             # rehydrate internal structure
             self._value_named_memory = memory_resource.open_named_memory(name + '-value')
-            self._internal = pymmcore.List(buffer=self._value_named_memory.buffer, rehydrate=True)
+            self._internal = pymmcore.Dict(buffer=self._value_named_memory.buffer, rehydrate=True)
 
         # save name
         self.name = name
