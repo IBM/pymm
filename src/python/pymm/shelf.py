@@ -273,7 +273,6 @@ class shelf():
                 continue
             items.append(s)
                 
-                
         return items
             
         
@@ -465,4 +464,26 @@ class shelf():
             assert metadata != None
             metadata.tx_multivar_commit(entry._value_named_memory)
         tx_vars = []
+    
+    def torch_create_empty_model(self, model, header_name):
+        for name, param in model.named_parameters():
+            setattr(self, header_name + "__" +name, torch.empty(param.size()))
+
+    def torch_save_model(self, model, header_name):
+        for name, param in model.named_parameters():
+            getattr(self, header_name + "__" + name).copy_(param)
+
+
+    def torch_load_model(self, model, header_name):
+        for shelf_var in self.get_item_names():
+            if(shelf_var.startswith(header_name)):
+                 name = shelf_var.lstrip(header_name + "__")
+                 split_name = (name.rsplit('.', 1)) # split_name[0]: nmodel variable name, split_name[1]: bias /weight
+                 # getattr(model, w.split(".")[0]).weight.copy_(getattr(self, shelf_var))
+                 getattr(getattr(model, split_name[0].split(".")[0]), split_name[1]).copy_(getattr(self, shelf_var))
+                
+                
+
+
+#def torch_load_model (model):
 
