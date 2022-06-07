@@ -479,8 +479,10 @@ class shelf():
             if(shelf_var.startswith(header_name)):
                  name = shelf_var.lstrip(header_name + "__")
                  split_name = (name.rsplit('.', 1)) # split_name[0]: nmodel variable name, split_name[1]: bias /weight
-                 # getattr(model, w.split(".")[0]).weight.copy_(getattr(self, shelf_var))
-                 getattr(getattr(model, split_name[0].split(".")[0]), split_name[1]).copy_(getattr(self, shelf_var))
+                 model_dist = getattr(getattr(model, split_name[0].split(".")[0]), split_name[1])
+                 shelf_src = getattr(self, shelf_var)
+                 with torch.no_grad():
+                     model_dist.copy_(shelf_src)
                 
                 
 
