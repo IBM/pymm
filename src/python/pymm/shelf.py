@@ -464,14 +464,19 @@ class shelf():
             assert metadata != None
             metadata.tx_multivar_commit(entry._value_named_memory)
         tx_vars = []
-    
-    def torch_create_empty_model(self, model, header_name):
-        for name, param in model.named_parameters():
-            setattr(self, header_name + "__" +name, torch.empty(param.size()))
 
-    def torch_save_model(self, model, header_name):
+
+    # Torch 
+    def torch_save(self, var_name, param, is_create_empty=False):
+        if (is_create_empty):
+            setattr(self, var_name, torch.empty(param.size()))
+        else:
+            getattr(self, var_name).copy_(param)
+ 
+    # Torch Model
+    def torch_save_model(self, model, header_name, is_create_empty=False):
         for name, param in model.named_parameters():
-            getattr(self, header_name + "__" + name).copy_(param)
+            self.torch_save(header_name + "__" + name, param, is_create_empty)
 
 
     def torch_load_model(self, model, header_name):
@@ -483,8 +488,39 @@ class shelf():
                  shelf_src = getattr(self, shelf_var)
                  with torch.no_grad():
                      model_dist.copy_(shelf_src)
-                
-                
+
+
+    # Torch Optimizer 
+    def torch_save_optimizer(self, opt, header_name, is_create_empty):
+        for group in range(len(opt.param_groups)):
+            for name in (opt.param_groups[group].keys()):
+                if (type(opt.param_groups[group][name]) is list):
+                    # implement list
+                    print (name)
+                else:
+                    setattr(self, header_name + "__" + name, opt.param_groups[group][name])
+
+
+    # Dict           
+    def dict_save(self, data_dict, header_name, is_torch_save=False, is_create_empty=False):
+        for name in data_dict.keys():
+            if(is_torch_save and type(name) is str):
+                # save model
+                if "model" in name: 
+                    self.torch_save_model(data_dict[name], header_name + "__" + name, is_create_empty)
+                    continue
+                if "optimizer" in name:
+                    self.torch_save_optimizer(data_dict[name], header_name + "__" + name, is_create_empty)
+                    continue
+            # in place for numpy array   
+            if (type(data_dict[name]) is np.ndarray and not is_create_empty):
+               getattr(self, header_name + "__" + name)[:] = data_dict[name] 
+               continue
+            # regular item
+            setattr(self, header_name + "__" + name, data_dict[name])
+    
+ 
+               
 
 
 #def torch_load_model (model):
