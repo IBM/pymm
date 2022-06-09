@@ -112,7 +112,7 @@ def train(epoch):
                     'model' : model,
                     'optimizer' : optimizer,
                     'loss': torch.empty(1) 
-        }, header_name = "mnist", is_inplace=False, is_create_empty=False)
+        }, header_name = "mnist", is_inplace=True, is_create_empty=False)
 
 
 #        shelf.dict_load({
