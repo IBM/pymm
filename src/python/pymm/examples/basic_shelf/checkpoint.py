@@ -10,6 +10,8 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 import pymm
+import numpy as np
+import sys
 
 args={}
 kwargs={}
@@ -74,6 +76,7 @@ class Net(nn.Module):
 def train(epoch):
     model.train()
     i = 0
+    print (type(i))
     for batch_idx, (data, target) in enumerate(train_loader):
         if args['cuda']:
             data, target = data.cuda(), target.cuda()
@@ -93,10 +96,36 @@ def train(epoch):
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data))
-        if(i==0):    
-            shelf.torch_save_model(model, "mnist")
+#        print(optimizer.param_groups[0].keys())
+#        for i in range(len(optimizer.param_groups[0]["params"])):
+#            print (type((optimizer.param_groups[0]["params"][i])))
+
+##        print ("model")
+##        for name, param in model.named_parameters():   
+##            print (type(param))
+        name = model.named_parameters()
+        print(type(model))
+        print(issubclass(type(model), nn.Module))
+#        print(type(model.named_parameters()) is <class 'generator'>)
+        shelf.save({
+                    'epoch': np.array([i]),
+                    'model' : model,
+                    'optimizer' : optimizer,
+                    'loss': torch.empty(1) 
+        }, header_name = "mnist", is_inplace=False, is_create_empty=False)
+
+
+#        shelf.dict_load({
+#                    'epoch': np.array([i]),
+#                    'model' : model,
+#                    'loss': np.array([loss.data]) 
+#        }, header_name = "mnist", is_torch_save=True, is_create_empty=False)
+
+
+#        if(i==0):    
+#           shelf.torch_save_model(model, "mnist")
 #        print (model.conv1.weight)
-        shelf.torch_load_model(model, "mnist")
+#        shelf.torch_load_model(model, "mnist")
 #        print (model.conv1.weight)
         if (i==1):
             exit(0)    
@@ -121,21 +150,26 @@ def test():
         100. * correct / len(test_loader.dataset)))
 
 
-
-
 shelf = pymm.shelf("mnist",size_mb=1024,pmem_path="/mnt/pmem0/", force_new=True)
-
 model = Net()
+#shelf.torch_create_empty_model(model, "mnist")
 
-shelf.torch_create_empty_model(model, "mnist")
 ##for name, param in model.named_parameters():
-##    setattr(shelf, name, torch.empty(param.size()))
+## setattr(shelf, name, torch.empty(param.size()))
 
 #if args['cuda']:
 #    model.cuda()
 
 optimizer = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
 
+shelf.save({
+                    'epoch': np.zeros(1),
+                    'model' : model,
+                    'optimizer' : optimizer,
+                    'loss': torch.empty(1) 
+                }, header_name = "mnist", is_create_empty=True)
+print("get_item_names")
+print(shelf.get_item_names())
 for epoch in range(1, args['epochs'] + 1):
     train(epoch)
 #    test()
