@@ -464,8 +464,8 @@ class shelf():
             metadata.tx_multivar_commit(entry._value_named_memory)
         tx_vars = []
 
-    def save(self, data, header_name, is_inplace=True, is_create_empty=False):
-        checkpoint.save_manager(checkpoint, self, data, header_name, is_inplace, is_create_empty)
+    def save(self, data, header_name, is_inplace=True):
+        checkpoint.save_manager(checkpoint, self, data, header_name, is_inplace)
 
 
 

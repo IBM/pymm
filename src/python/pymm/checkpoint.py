@@ -13,37 +13,37 @@ class checkpoint():
     ###############################################
     #########  checkpoint manager #################
     ###############################################
-    def save_manager(self, shelf, data, header_name, is_inplace=True, is_create_empty=False):
+    def save_manager(self, shelf, data, header_name, is_inplace=True):
         #torch model
         type_name = type(data)
         if(issubclass(type_name, torch.nn.Module)):
-            self.torch_save_model(self, shelf, data, header_name, is_inplace, is_create_empty)
+            self.torch_save_model(self, shelf, data, header_name, is_inplace)
             return
 
         # Torch Optim   
         if ("torch.optim" in str(type_name)):
-            self.torch_save_optimizer(self, shelf, data, header_name, is_inplace, is_create_empty)
+            self.torch_save_optimizer(self, shelf, data, header_name, is_inplace)
             return
 
         # torch in-place
-        if (is_inplace and "torch.nn.parameter" in str(type_name) or "torch.Tensor" in str(type_name)):
-            self.torch_save(self, shelf, data, header_name, is_inplace, is_create_empty)
+        if (is_inplace and ("torch.nn.parameter" in str(type_name) or "torch.Tensor" in str(type_name))):
+            self.torch_save(self, shelf, data, header_name, is_inplace)
             return
 
         # list
         if (type_name is list):    
-           self.list_save(self, shelf, data, header_name, is_inplace, is_create_empty)
+           self.list_save(self, shelf, data, header_name, is_inplace)
            return
 
         # dict
         if (type_name is dict):    
-           self.dict_save(self, shelf, data, header_name, is_inplace, is_create_empty)
+           self.dict_save(self, shelf, data, header_name, is_inplace)
            return
 
         # in-place Numpy
         if (is_inplace and type_name is np.ndarray):
-            self.numpy_save(self, shelf, data, header_name, is_inplace, is_create_empty)
-
+            self.numpy_save(self, shelf, data, header_name, is_inplace)
+            return
          # regular item
         setattr(shelf, header_name, data)
 
@@ -52,20 +52,18 @@ class checkpoint():
     ###### checkpoint primitives ##################
     ###############################################
     # Save in-place Torch 
-    def torch_save(self, shelf, data, header_name, is_inplace=True, is_create_empty=False):
-        if (is_create_empty):
-            setattr(shelf, header_name + "__+inplacetorch", torch.empty(data.size()))
-        else:
-            getattr(shelf, header_name + "__+inplacetorch").copy_(data)
+    def torch_save(self, shelf, data, header_name, is_inplace=True):
+        with torch.no_grad():
+            getattr(shelf, header_name).copy_(data)
  
 #    def torch_load(self, header_name, torch_name):
 #        with torch.no_grad():
 #            torch_name.copy_(getattr(self, shelf_var))
 
     # Save Torch Model
-    def torch_save_model(self, shelf, model, header_name, is_inplace=True, is_create_empty=False):
+    def torch_save_model(self, shelf, model, header_name, is_inplace=True):
         for name, param in model.named_parameters():
-            self.save_manager(self, shelf, param, header_name + "__+model_#" + name , is_inplace, is_create_empty)
+            self.save_manager(self, shelf, param, header_name + "__+model_#" + name , is_inplace)
 
 
 
@@ -82,24 +80,21 @@ class checkpoint():
 
 
     # Save Torch Optimizer 
-    def torch_save_optimizer(self, shelf, opt, header_name, is_inplace, is_create_empty):
-            self.save_manager(self, shelf, opt.param_groups, header_name + "__+optimizer_#param_groups", is_inplace, is_create_empty)
+    def torch_save_optimizer(self, shelf, opt, header_name, is_inplace):
+            self.save_manager(self, shelf, opt.param_groups, header_name + "__+optimizer_#param_groups", is_inplace)
 
      # list save 
-    def list_save (self, shelf, list_items, header_name, is_inplace=True, is_create_empty=False):
+    def list_save (self, shelf, list_items, header_name, is_inplace=True):
         for i in range(len(list_items)):
-           self.save_manager(self, shelf, list_items[i], header_name + "__+list_" +  str(i), is_inplace, is_create_empty)
+           self.save_manager(self, shelf, list_items[i], header_name + "__+list_" +  str(i), is_inplace)
 
      # Dict save
-    def dict_save (self, shelf, data_dict, header_name, is_inplace=True, is_create_empty=False):
+    def dict_save (self, shelf, data_dict, header_name, is_inplace=True):
         for name in data_dict.keys():
-           self.save_manager(self, shelf, data_dict[name], header_name + "__+dict_" +  name, is_inplace, is_create_empty)
+           self.save_manager(self, shelf, data_dict[name], header_name + "__+dict_" +  name, is_inplace)
 
     # Save in-place Numpyarray
-    def numpy_save(self, shelf, data, header_name, is_inplace=True, is_create_empty=False):
-         if (is_create_empty):
-            setattr(self, header_name + "__inplacenumpy", data)
-         else:
-            getattr(self, header_name + "__inplacenumpy")[:] = data
+    def numpy_save(self, shelf, data, header_name, is_inplace=True):
+            getattr(shelf, header_name)[:] = data
 
 
