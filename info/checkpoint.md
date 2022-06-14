@@ -9,7 +9,7 @@ shelf.save (
                      is_inplace=True, 
                   )
 ```
-
+## parameters
 **data** - the data of the variable we place on the shelf, the variable could be nested, like a list of dicts.
 Please refer to table 1 for the checkpointing types supported.
  
@@ -30,7 +30,7 @@ Please refer to table 1 for the checkpointing types supported.
 | Other basic PYMM supported types (int, float, sting..) | Basic (supported only out-of-place) | NO |
 
 
-**For example:**
+### Example:**
 ```
 shelf.save( {   a = 1,   b = list["mylistzero", "mylistone"]}, header_name = example )
 }
