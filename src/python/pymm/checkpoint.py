@@ -63,7 +63,7 @@ class checkpoint():
     # Save Torch Model
     def torch_save_model(self, shelf, model, header_name, is_inplace=True):
         for name, param in model.named_parameters():
-            self.save_manager(self, shelf, param, header_name + "__+model_#" + name , is_inplace)
+            self.save_manager(self, shelf, param, header_name + "__+model_#named_parameters" + name , is_inplace)
 
 
 
