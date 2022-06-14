@@ -10,7 +10,9 @@ class checkpoint():
 ##### Save ##########
 
 
-# checkpoint manager
+    ###############################################
+    #########  checkpoint manager #################
+    ###############################################
     def save_manager(self, shelf, data, header_name, is_inplace=True, is_create_empty=False):
         #torch model
         type_name = type(data)
@@ -46,7 +48,10 @@ class checkpoint():
         setattr(shelf, header_name, data)
 
 
-    # in-place Torch 
+    ###############################################
+    ###### checkpoint primitives ##################
+    ###############################################
+    # Save in-place Torch 
     def torch_save(self, shelf, data, header_name, is_inplace=True, is_create_empty=False):
         if (is_create_empty):
             setattr(shelf, header_name + "__+inplacetorch", torch.empty(data.size()))
@@ -57,7 +62,7 @@ class checkpoint():
 #        with torch.no_grad():
 #            torch_name.copy_(getattr(self, shelf_var))
 
-    # Torch Model
+    # Save Torch Model
     def torch_save_model(self, shelf, model, header_name, is_inplace=True, is_create_empty=False):
         for name, param in model.named_parameters():
             self.save_manager(self, shelf, param, header_name + "__+model_#" + name , is_inplace, is_create_empty)
@@ -76,21 +81,21 @@ class checkpoint():
 #                     model_dist.copy_(shelf_src)
 
 
-    # Torch Optimizer 
+    # Save Torch Optimizer 
     def torch_save_optimizer(self, shelf, opt, header_name, is_inplace, is_create_empty):
             self.save_manager(self, shelf, opt.param_groups, header_name + "__+optimizer_#param_groups", is_inplace, is_create_empty)
 
-     # list 
+     # list save 
     def list_save (self, shelf, list_items, header_name, is_inplace=True, is_create_empty=False):
         for i in range(len(list_items)):
            self.save_manager(self, shelf, list_items[i], header_name + "__+list_" +  str(i), is_inplace, is_create_empty)
 
-     # list 
+     # Dict save
     def dict_save (self, shelf, data_dict, header_name, is_inplace=True, is_create_empty=False):
         for name in data_dict.keys():
            self.save_manager(self, shelf, data_dict[name], header_name + "__+dict_" +  name, is_inplace, is_create_empty)
 
-    # in-place Numpyarray
+    # Save in-place Numpyarray
     def numpy_save(self, shelf, data, header_name, is_inplace=True, is_create_empty=False):
          if (is_create_empty):
             setattr(self, header_name + "__inplacenumpy", data)
