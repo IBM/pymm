@@ -25,6 +25,7 @@ import torch
 import weakref
 import numpy as np
 import ctypes
+import inspect
 
 from .metadata import *
 from .memoryresource import MemoryResource
@@ -464,9 +465,18 @@ class shelf():
             metadata.tx_multivar_commit(entry._value_named_memory)
         tx_vars = []
 
-    def save(self, data, header_name, is_inplace=True):
-        checkpoint.save_manager(checkpoint, self, data, header_name, is_inplace)
+    def save(self, data, shelf_var_name, is_inplace=True):
+        checkpoint.save_manager(checkpoint, self, data, shelf_var_name, is_inplace)
 
+    def load (self, target, shelf_var_name, is_by_var=True):
+        if (is_by_var):
+            return checkpoint.load_by_var_manager(checkpoint, self, target, shelf_var_name)
+
+#    def load_by_name (self, shelf_header_name, target_module_name="__main__", is_inplace=True):
+#        print ("target_name")
+
+#    def load(self, target_obj, target, shelf_var_name, is_inplace=True):
+#        checkpoint.load_manager(checkpoint, self, target_obj, target, shelf_var_name, is_inplace)
 
 
 

@@ -112,14 +112,14 @@ def train(epoch):
                     'model' : model,
                     'optimizer' : optimizer,
 #                    'loss': torch.empty(1) 
-        }, header_name = "mnist", is_inplace=True)
+        }, shelf_var_name = "mnist", is_inplace=True)
 
 
 #        shelf.dict_load({
 #                    'epoch': np.array([i]),
 #                    'model' : model,
 #                    'loss': np.array([loss.data]) 
-#        }, header_name = "mnist", is_torch_save=True, is_create_empty=False)
+#        }, shelf_var_name = "mnist", is_torch_save=True, is_create_empty=False)
 
 
 #        if(i==0):    
@@ -167,9 +167,13 @@ shelf.save({
                     'model' : model,
                     'optimizer' : optimizer,
                     'loss': torch.empty(1) 
-                }, header_name = "mnist", is_inplace=False)
+                }, shelf_var_name = "mnist", is_inplace=False)
+
+print ("hello")  
+model = shelf.load(model, "mnist__+dict_model")  
 print("get_item_names")
 print(shelf.get_item_names())
+print(sys.modules[__name__])
 for epoch in range(1, args['epochs'] + 1):
     train(epoch)
 #    test()
