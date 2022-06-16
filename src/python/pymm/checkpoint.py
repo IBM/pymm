@@ -16,17 +16,17 @@ class checkpoint():
     def save_manager(self, shelf, data, header_name, is_inplace=True):
         #torch model
         type_name = type(data)
-        if(issubclass(type_name, torch.nn.Module)):
+        if(self.is_type_torch_model(type_name)):
             self.torch_save_model(self, shelf, data, header_name, is_inplace)
             return
 
         # Torch Optim   
-        if ("torch.optim" in str(type_name)):
+        if (self.is_type_torch_optimizer(type_name)):
             self.torch_save_optimizer(self, shelf, data, header_name, is_inplace)
             return
 
         # torch in-place
-        if (is_inplace and ("torch.nn.parameter" in str(type_name) or "torch.Tensor" in str(type_name))):
+        if (is_inplace and self.is_type_torch(type_name)):  
             self.torch_save(self, shelf, data, header_name, is_inplace)
             return
 
@@ -63,7 +63,7 @@ class checkpoint():
     # Save Torch Model
     def torch_save_model(self, shelf, model, header_name, is_inplace=True):
         for name, param in model.named_parameters():
-            self.save_manager(self, shelf, param, header_name + "__+model_#named_parameters_" + name , is_inplace)
+            self.save_manager(self, shelf, param, header_name + "__+model_#named_parameters" + name , is_inplace)
 
 
 
@@ -98,3 +98,16 @@ class checkpoint():
             getattr(shelf, header_name)[:] = data
 
 
+    
+    ###############################################
+    ###### check types  ###########################
+    ###############################################
+
+    def is_type_torch(type_name):
+         return ("torch.nn.parameter" in str(type_name) or "torch.Tensor" in str(type_name))
+
+    def is_type_torch_model(type_name):
+         return (issubclass(type_name, torch.nn.Module))
+
+    def is_type_torch_optimizer(type_name):
+        return("torch.optim" in str(type_name))
