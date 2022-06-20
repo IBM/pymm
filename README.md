@@ -25,7 +25,7 @@ we hope to extend this to Apache Arrow, and panda dataframes-like data types.
 
 # Install PyMM
 
-### Dpendencies
+### Dependencies
 ```
 ./deps/install-<Your-OS-Version>.sh
 ./deps/install-python-deps.sh
