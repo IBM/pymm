@@ -74,9 +74,9 @@ class Net(nn.Module):
 
 
 def train(epoch):
+    global model
     model.train()
-    i = 0
-    print (type(i))
+    index = 0
     for batch_idx, (data, target) in enumerate(train_loader):
         if args['cuda']:
             data, target = data.cuda(), target.cuda()
@@ -96,40 +96,48 @@ def train(epoch):
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data))
-#        print(optimizer.param_groups[0].keys())
-#        for i in range(len(optimizer.param_groups[0]["params"])):
-#            print (type((optimizer.param_groups[0]["params"][i])))
 
-##        print ("model")
-##        for name, param in model.named_parameters():   
-##            print (type(param))
-        name = model.named_parameters()
-        print(type(model))
-        print(issubclass(type(model), nn.Module))
-#        print(type(model.named_parameters()) is <class 'generator'>)
-        shelf.save({
-                    'epoch': np.array([i]),
+        # save every two loops
+        if (not (index % 2)):
+            print ("save (iterator: i = " + str(index) + ")")
+            shelf.save({
+                    'epoch': np.array([epoch]),
                     'model' : model,
                     'optimizer' : optimizer,
-#                    'loss': torch.empty(1) 
-        }, shelf_var_name = "mnist", is_inplace=True)
-
-
-#        shelf.dict_load({
-#                    'epoch': np.array([i]),
-#                    'model' : model,
-#                    'loss': np.array([loss.data]) 
-#        }, shelf_var_name = "mnist", is_torch_save=True, is_create_empty=False)
-
-
-#        if(i==0):    
-#           shelf.torch_save_model(model, "mnist")
-#        print (model.conv1.weight)
-#        shelf.torch_load_model(model, "mnist")
-#        print (model.conv1.weight)
-        if (i==1):
+                    'loss': loss.data 
+            }, shelf_var_name = "mnist", is_inplace=True)
+            save_model = {}
+            for name, param in model.named_parameters():
+                save_model[str(name)] = torch.clone(param) 
+            save_loss_data = loss.data
+            save_optimizer = []
+            for i in range(len(optimizer.param_groups[0]["params"])):
+                save_optimizer.append(torch.clone(optimizer.param_groups[0]["params"][i]))
+         
+        # load the saved value
+        if (index % 2):
+            print ("load (iterator: i = " + str(index-1) + "), we are in iterator: ", str(index))
+#            optimizer.param_groups = shelf.load(optimizer, "mnist__+dict_optimizer")
+            model = shelf.load(model, "mnist__+dict_model")
+            epoch = shelf.load(epoch, "mnist__+dict_epoch")
+            loss.data = shelf.load(loss.data, "mnist__+dict_loss")
+            # check for correctness
+            for name, param in model.named_parameters():
+                if (not torch.equal(save_model[name], param)):
+                    print ("Error: check that we load this item currectly - " + str(name))
+#                    exit(0)
+            if (not (save_loss_data == loss.data)): 
+                print ("Error: check that we load this item currectly - loss.data")
+                exit(0)
+            for i in range(len(optimizer.param_groups[0]["params"])):
+                if (not torch.equal(save_optimizer[i], optimizer.param_groups[0]["params"][i])):
+                    print ("Error: check that we load this item currectly - optimizer.param_groups[0][params][" + str(i) + "]")
+#                exit(0)
+        print ("I am here " + str(index))
+        if (index == 2):
+            print ("Test pass")
             exit(0)    
-        i+=1    
+        index+=1    
 
 def test():
     model.eval()
@@ -169,11 +177,8 @@ shelf.save({
                     'loss': torch.empty(1) 
                 }, shelf_var_name = "mnist", is_inplace=False)
 
-print ("hello")  
-model = shelf.load(model, "mnist__+dict_model")  
+# items on the shelf
 print("get_item_names")
-print(shelf.get_item_names())
-print(sys.modules[__name__])
 for epoch in range(1, args['epochs'] + 1):
     train(epoch)
 #    test()

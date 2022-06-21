@@ -47,6 +47,7 @@ class checkpoint():
             self.numpy_save(self, shelf, data, shelf_var_name, is_inplace)
             return
          # regular item
+
         setattr(shelf, shelf_var_name, data)
 
 
@@ -101,10 +102,10 @@ class checkpoint():
 
         # Torch Optim   
         if (self.is_type_torch_optimizer(type_name)):
-            return self.torch_load_optimizer(self, shelf, target, shelf_gar_name)
+            return self.torch_load_optimizer(self, shelf, target, shelf_var_name)
 
         # list
-        if (type_name is list):    
+        if (type_name is list):   
            return self.list_load(self, shelf, target, shelf_var_name + "__+list_")
 
         # dict
@@ -112,7 +113,7 @@ class checkpoint():
            return self.dict_load(self, shelf, target, shelf_var_name + "__+dict_")
 
         # get the item from the shelf
-        return getattr(shelf, shelf_var_name)
+        return self.org_type(getattr(shelf, shelf_var_name))
 
     ###############################################
     ###### load primitives ##################
@@ -130,21 +131,36 @@ class checkpoint():
 
     # load Torch Optimizer 
     def torch_load_optimizer(self, shelf, opt, shelf_var_name):
-        self.load_by_var_manager(self, shelf, opt.param_groups, shelf_var_name + "__+optimizer_#param_groups")
+        return self.load_by_var_manager(self, shelf, opt.param_groups, shelf_var_name + "__+optimizer_#param_groups")
 
      # load list 
     def list_load (self, shelf, list_items, shelf_var_name):
+        tmp_list = []
         for i in range(len(list_items)):
-           list_items[i] = self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i))
-        return list_items
+           tmp_list.append(self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i)))
+        return tmp_list
 
      # load dict
     def dict_load (self, shelf, data_dict, shelf_var_name):
+        tmp_dict = {}
         for name in data_dict.keys():
-           data_dict[name] = self.load_by_var_manager(self, shelf, data_dict[name], shelf_var_name + name)
-        return data_dict   
+           tmp_dict[name] = self.load_by_var_manager(self, shelf, data_dict[name], shelf_var_name + name)
+        return tmp_dict   
 
-
+    def org_type (shelf_var):
+        if ("pymm.integer_number" in str(type(shelf_var))):
+            return int(shelf_var)
+        if ("pymm.float_number" in str(type(shelf_var))):
+            return float(shelf_var)
+        if ("pymm.bytes" in str(type(shelf_var))):
+            return bytes(shelf_var)
+        if ("pymm.string" in str(type(shelf_var))):
+            return str(shelf_var)
+        if ("pymm.ndarray" in str(type(shelf_var))):
+            return np.array(shelf_var)
+        if ("pymm.torch_tensor" in str(type(shelf_var))):
+            return torch.clone(shelf_var)
+         
 ###############################################
 ###############################################
 ###### help function  ###########################

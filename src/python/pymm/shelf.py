@@ -471,16 +471,3 @@ class shelf():
     def load (self, target, shelf_var_name, is_by_var=True):
         if (is_by_var):
             return checkpoint.load_by_var_manager(checkpoint, self, target, shelf_var_name)
-
-#    def load_by_name (self, shelf_header_name, target_module_name="__main__", is_inplace=True):
-#        print ("target_name")
-
-#    def load(self, target_obj, target, shelf_var_name, is_inplace=True):
-#        checkpoint.load_manager(checkpoint, self, target_obj, target, shelf_var_name, is_inplace)
-
-
-
-
-
-#def torch_load_model (model):
-
