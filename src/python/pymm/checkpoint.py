@@ -67,7 +67,9 @@ class checkpoint():
 
     # Save Torch Optimizer 
     def torch_save_optimizer(self, shelf, opt, shelf_var_name, is_inplace):
-            self.save_manager(self, shelf, opt.param_groups, shelf_var_name + "__+optimizer_#param_groups", is_inplace)
+            for k,v in opt.state_dict().items():
+                if (k != "state"):
+                    self.save_manager(self, shelf, v, shelf_var_name + "__+optimizer_#state_dict_" + str(k), is_inplace)
 
      # list save 
     def list_save (self, shelf, list_items, shelf_var_name, is_inplace=True):
