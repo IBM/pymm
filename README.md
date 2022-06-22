@@ -48,7 +48,7 @@ For more installation detailes: [BUILD_PyMM](./info/build_PyMM.md)
 
 
 ### Docker hub container image
-A pre-complie pymm with the latest version:
+A precompile pymm with the latest version:
 https://hub.docker.com/repository/docker/moshik1/pymm
 
 #### Docker run command
@@ -63,7 +63,7 @@ docker run -it -v /mnt/pmem0:/mnt/pmem0 moshik1/pymm:tag
 PyMM allows the programmer to easily define what type of memory (i.e.,
 volatile or persistent) a variable should be assigned to.  This is
 achieved with the **shelf** abstraction.  Each shelf is associated
-with a MCAS memory pool.  For ease of management, we recommend setting
+with an MCAS memory pool.  For ease of management, we recommend setting
 up an fsdax persistent memory mount (e.g., /mnt/pmem0) - see [Notes on
 DAX](./MCAS_notes_on_dax.md).  This is where shelves will be created.
 
@@ -90,7 +90,7 @@ total 1.1G
 1.0G myShelf.data  4.0K myShelf.map
 ```
 
-Note, each shelf/pool results in a data file and metadata file (.map).  To
+Note, that each shelf/pool results in a data file and metadata file (.map).  To
 erase a shelf, the corresponding files can be deleted through 'rm'.  If
 a shelf already exists, then the pymm.shelf construction will re-open 
 the existing shelf.
@@ -106,8 +106,7 @@ environment variable to reset and clear the pool.
 
 ## Shelving Variables
 
-When a shelf is opened, any variables on it are immediately available.  There
-is no need for loading or de-serialization (e.g., unpickling).
+When a shelf is opened, any variables on it are immediately available.  There is no need for loading or de-serialization (e.g., unpickling).
 
 To create a Numpy ndarray on the shelf, a pymm.ndarray data type is used.  The
 constructor parameters for this are identical to numpy.ndarray.  To create a variable
@@ -119,7 +118,7 @@ constructor parameters for this are identical to numpy.ndarray.  To create a var
 ```
 
 This creates the ndarray in persistent memory and under-the-hood, stores the
-meta data so that the variable type is known on recovery.  Once created the
+metadata so that the variable type is known on recovery.  Once created the
 array can be populated in place.  For example:
 
 ```python
@@ -204,7 +203,7 @@ shelved_ndarray([[75, 87, 59, ..., 27,  2, 33],
 
 ## Demo
 
-A simply demo is available (src/python/pymm/demo.py).  You will need matplotlib
+A simple demo is available (src/python/pymm/demo.py).  You will need matplotlib
 and scikit-image working for the demo (it will open a GUI dialog box).
 
 ```python
@@ -238,7 +237,7 @@ RuntimeError: non-pymm type (y, <class 'int'>) cannot be put on the shelf
 
 ## Appendix
 
-* Example creating large array:
+* Example creating a large array:
 
 ```python
 Python 3.6.8 (default, Aug 18 2020, 08:33:21) 
@@ -254,7 +253,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 465 
 ```
 
-* Example loading large file (beyond DRAM size)
+* Example loading a large file (beyond DRAM size)
 
 ```python
 >>> import pymm
