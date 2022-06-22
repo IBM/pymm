@@ -24,6 +24,13 @@ Configure as debug build:
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. 
 ```
 
+or without building packages:
+
+```bash
+export PYMM_DEV=1
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=`pwd`/dist .. 
+```
+
 Build bootstrap libraries:
 ```bash
 make bootstrap
