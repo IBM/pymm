@@ -13,9 +13,9 @@ shelf.save (
 **data** - the data of the variable we place on the shelf, the variable could be nested, like a list of dicts.
 Please refer to table 1 for the checkpointing types supported.
  
-**shelf_var_name** - the shekf name for putting the data on the shelf. if the data_type is basic, then the shelf_var_name is the shelf_name, but if it is complex, then each complex item will add an additional text to the shelf_var_name (see column "add to shelf_var_name" in table 1).
+**shelf_var_name** - the shelf name identifying shelf to put data on. If the data_type is basic, then the shelf_var_name is the shelf_name, but if it is complex, then each complex item will add an additional suffix to the shelf_var_name (see column "add to shelf_var_name" in table 1).
 
-**in-place [default = True]** - This variable allows assigning variables in-place to existing variables on the shelf. It is supported in Torch and NumPy. If changed to False, then it would be out-of-place assigning. It uses setattr() under the hood. The shelf_item will be erased and the new data will be written. However, out-of-place is much slower than in-place.  You should use in_place=False when setting the item on the shelf for the first time.
+**in-place [default = True]** - this variable allows updating variables in-place that already exist on the shelf. It is supported in Torch and NumPy. If set to False, then it would be out-of-place assignment; the existing shelved item is erased and the new data written. Note, out-of-place updates are potentially much slower than in-place.  You should use in_place=False when instantiating an item on the shelf for the first time.
 
 ### Table 1 : Types supported for checkpoiting.
 
