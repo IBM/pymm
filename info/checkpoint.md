@@ -1,6 +1,6 @@
 # Checkpoint 
 
-The checkpoint method lets you put specific variables on the shelf and load tem later on. 
+The checkpoint method lets you put specific variables on the shelf and load them later on. 
 
 ```
 shelf.save (
