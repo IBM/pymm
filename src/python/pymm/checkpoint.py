@@ -16,8 +16,9 @@ class checkpoint():
     ######### save checkpoint manager #################
     ###############################################
     def save_manager(self, shelf, data, shelf_var_name, is_inplace=True):
-        #torch model
         type_name = type(data)
+
+        #torch model
         if(self.is_type_torch_model(type_name)):
             self.torch_save_model(self, shelf, data, shelf_var_name, is_inplace)
             return
@@ -28,12 +29,15 @@ class checkpoint():
             return
 
         # torch in-place
-        if (is_inplace and self.is_type_torch(type_name)):  
-            self.torch_save(self, shelf, data, shelf_var_name, is_inplace)
-            return
-
+        if (is_inplace and self.is_type_torch(type_name)):
+            try:
+                print ("try inplace")
+                self.torch_save(self, shelf, data, shelf_var_name, is_inplace)
+                return
+            except:
+               print ("Go to setattr, the Inplace failed for " + shelf_var_name)
         # list
-        if (type_name is list):    
+        if (type_name is list):   
            self.list_save(self, shelf, data, shelf_var_name, is_inplace)
            return
 
@@ -44,10 +48,13 @@ class checkpoint():
 
         # in-place Numpy
         if (is_inplace and type_name is np.ndarray):
-            self.numpy_save(self, shelf, data, shelf_var_name, is_inplace)
-            return
-         # regular item
+            try: 
+                self.numpy_save(self, shelf, data, shelf_var_name, is_inplace)
+                return
+            except:
+               print ("Go to setattr, the Inplace failed for " + shelf_var_name)
 
+         # regular item
         setattr(shelf, shelf_var_name, data)
 
 
@@ -68,18 +75,19 @@ class checkpoint():
     # Save Torch Optimizer 
     def torch_save_optimizer(self, shelf, opt, shelf_var_name, is_inplace):
             for k,v in opt.state_dict().items():
-                if (k != "state"):
-                    self.save_manager(self, shelf, v, shelf_var_name + "__+optimizer_#state_dict_" + str(k), is_inplace)
+                self.save_manager(self, shelf, v, shelf_var_name + "__+optimizer_#state_dict_" + str(k), is_inplace)
 
      # list save 
     def list_save (self, shelf, list_items, shelf_var_name, is_inplace=True):
         for i in range(len(list_items)):
+           print (shelf_var_name)
+           print (type(list_items[i]))
            self.save_manager(self, shelf, list_items[i], shelf_var_name + "__+list_" +  str(i), is_inplace)
 
      # Dict save
     def dict_save (self, shelf, data_dict, shelf_var_name, is_inplace=True):
         for name in data_dict.keys():
-           self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+dict_" +  name, is_inplace)
+           self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+dict_" +  str(name), is_inplace)
 
     # Save in-place Numpyarray
     def numpy_save(self, shelf, data, shelf_var_name, is_inplace=True):
@@ -96,23 +104,24 @@ class checkpoint():
     ######### load checkpoint manager #################
     ###############################################
 
-    def load_by_var_manager (self, shelf, target, shelf_var_name):
-        
+    def load_by_var_manager (self, shelf, target, shelf_var_name, is_inplace=True):
         type_name = type(target)
-        if(self.is_type_torch_model(type_name)):
-            return self.torch_load_model(self, shelf, target, shelf_var_name)
 
-        # Torch Optim   
+        if(self.is_type_torch_model(type_name)):
+            return self.torch_load_model(self, shelf, target, shelf_var_name, is_inplace)
+
+        # Torch Optim
         if (self.is_type_torch_optimizer(type_name)):
-            return self.torch_load_optimizer(self, shelf, target, shelf_var_name)
+            return self.torch_load_optimizer(self, shelf, target, shelf_var_name, is_inplace)
 
         # list
-        if (type_name is list):   
-           return self.list_load(self, shelf, target, shelf_var_name + "__+list_")
+        if (type_name is list):  
+           print (shelf_var_name)
+           return self.list_load(self, shelf, target, shelf_var_name + "__+list_", is_inplace)
 
         # dict
         if (type_name is dict):    
-           return self.dict_load(self, shelf, target, shelf_var_name + "__+dict_")
+           return self.dict_load(self, shelf, target, shelf_var_name + "__+dict_", is_inplace)
 
         # get the item from the shelf
         return self.org_type(getattr(shelf, shelf_var_name))
@@ -122,9 +131,9 @@ class checkpoint():
     ###############################################
 
     # load Torch Model
-    def torch_load_model(self, shelf, model, shelf_var_name):
+    def torch_load_model(self, shelf, model, shelf_var_name, is_inplace):
         for name, param in model.named_parameters():
-            shelf_torch = self.load_by_var_manager(self, shelf, param, shelf_var_name + "__+model_#named_parameters_" + name)
+            shelf_torch = self.load_by_var_manager(self, shelf, param, shelf_var_name + "__+model_#named_parameters_" + name, is_inplace)
             split_name = (name.rsplit('.', 1)) # split_name[0]: nmodel variable name, split_name[1]: bias /weight
             model_item = getattr(getattr(model, split_name[0].split(".")[0]), split_name[1])
             with torch.no_grad():
@@ -132,22 +141,71 @@ class checkpoint():
         return model
 
     # load Torch Optimizer 
-    def torch_load_optimizer(self, shelf, opt, shelf_var_name):
-        return self.load_by_var_manager(self, shelf, opt.param_groups, shelf_var_name + "__+optimizer_#param_groups")
+    # in_place
+    def torch_load_optimizer(self, shelf, opt, shelf_var_name, is_inplace):
+        for k1, v1 in opt.state_dict().items():
+             # Note 1: The optimizer.param_groups["param"][] does not contain the full tensor, 
+             # but only an index to model.tensor, so we only save the index, and verify that
+             # the optimizer.param_groups["param"][] is in the correct order during the load operation.
+            if (k1 == "param_groups"):
+                for i in range(len(v1)):
+                    for k2, v2 in v1[i].items():
+                        if (k2 == "params"):
+                            for j in range(len(v2)):
+                                # verification stage
+                                if (v2[j] != getattr(shelf, shelf_var_name + "__+optimizer_#state_dict_param_groups__+list_" + str(i) + "__+dict_params__+list_" + str(j))):
+                                    print ("Error in load optimizer, the optimizer.param_groups[\"params\"] are not correct")
+                                    exit(0)
+                                
+                        else:    
+                            opt.param_groups[i][k2] = self.load_by_var_manager(self, shelf, v2, shelf_var_name + "__+optimizer_#state_dict_param_groups__+list_" + str(i) + "__+dict_" + str(k2), is_inplace)
 
-     # load list 
-    def list_load (self, shelf, list_items, shelf_var_name):
-        tmp_list = []
-        for i in range(len(list_items)):
-           tmp_list.append(self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i)))
-        return tmp_list
+            # Note 2: The optimizer.state dictionary is empty, so we add the saved values
+            if (k1 == "state"):
+                list_shelf_items = shelf.get_item_names()
+                shelf_val_2_add = []
+                header = shelf_var_name + "__+optimizer_#state_dict_state__+dict_"
+                for i in range(len(list_shelf_items)):
+                    if (header in list_shelf_items[i]):
+                       shelf_val_2_add.append(list_shelf_items[i].split(header, maxsplit=1)[1])
+                for i in range(len(shelf_val_2_add)):
+                    first_split = (shelf_val_2_add[i].split("__"))
+                    second_split = first_split[1].split("+dict_")
+                    opt.state[first_split[0]][second_split[1]] = self.org_type(getattr(shelf, header + shelf_val_2_add[i]))
+        return 
+    
+    # load list 
+    def list_load (self, shelf, list_items, shelf_var_name, is_inplace=True):
+        # load inplace
+        print (type(list_items[7]))
+        if (is_inplace):
+            for i in range(len(list_items)):
+                list_items[i] = self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i), is_inplace)
+            return  
+        # return the value
+        else:
+            tmp_list = []
+            for i in range(len(list_items)):
+               tmp_list.append(self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i)), is_inplace)
+            return tmp_list
+
+
+
+
 
      # load dict
-    def dict_load (self, shelf, data_dict, shelf_var_name):
-        tmp_dict = {}
-        for name in data_dict.keys():
-           tmp_dict[name] = self.load_by_var_manager(self, shelf, data_dict[name], shelf_var_name + name)
-        return tmp_dict   
+    def dict_load (self, shelf, data_dict, shelf_var_name, is_inplace=True):
+        # load inplace
+        if (is_inplace):
+            for name in data_dict.keys():
+               data_dict[name] = self.load_by_var_manager(self, shelf, data_dict[name], shelf_var_name + name, is_inplace)
+            return    
+        else: 
+        # return the value
+            tmp_dict = {}
+            for name in data_dict.keys():
+                tmp_dict[name] = self.load_by_var_manager(self, shelf, data_dict[name], shelf_var_name + name, is_inplace)
+            return tmp_dict   
 
     def org_type (shelf_var):
         if ("pymm.integer_number" in str(type(shelf_var))):
