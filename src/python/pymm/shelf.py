@@ -259,7 +259,10 @@ class shelf():
         else:
             return self.__dict__[name]
 #            return weakref.ref(self.__dict__[name])
-            
+          
+    def __hasattr__(self, name):
+        return (name in self.__dict__)
+
     @methodcheck(types=[])
     def get_item_names(self, all=False):
         '''
