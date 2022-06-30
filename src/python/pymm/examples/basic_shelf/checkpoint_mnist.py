@@ -71,8 +71,6 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-
-
 def train(epoch):
     global model
     model.train()
@@ -98,15 +96,18 @@ def train(epoch):
                 100. * batch_idx / len(train_loader), loss.data))
 
         # save every two loops
-        if (not (index % 2)):
-            print ("save (iterator: i = " + str(index) + ")")
+#        if (not (index % 2)):
+        if (1):
             shelf.save({
                     'epoch': np.array([epoch]),
-                    'model' : model,
-                    'optimizer' : optimizer,
+#                    'model' : model.state_dict(),
+                    'optimizer' : optimizer.state_dict(),
                     'loss': loss.data 
-            }, shelf_var_name = "mnist", is_inplace=True)
-            save_model = {}
+            }, shelf_var_name = "mnist")
+            exit(0)
+            torch.save({"model": model.state_dict(),
+                         "optimizer": optimizer.state_dict()}, "a2.txt")
+            print (optimizer.state)
             for name, param in model.named_parameters():
                 save_model[str(name)] = torch.clone(param) 
             save_loss_data = loss.data
@@ -115,24 +116,26 @@ def train(epoch):
                 save_optimizer.append(torch.clone(optimizer.param_groups[0]["params"][i]))
          
         # load the saved value
-        if (index % 2):
+        if (index == 1):
             print ("load (iterator: i = " + str(index-1) + "), we are in iterator: ", str(index))
-#            optimizer.param_groups = shelf.load(optimizer, "mnist__+dict_optimizer")
             model = shelf.load(model, "mnist__+dict_model")
+            print (optimizer.param_groups[0]['dampening'])
+            shelf.load(optimizer, "mnist__+dict_optimizer")
+            print (optimizer.param_groups[0]['dampening'])
             epoch = shelf.load(epoch, "mnist__+dict_epoch")
             loss.data = shelf.load(loss.data, "mnist__+dict_loss")
             # check for correctness
             for name, param in model.named_parameters():
                 if (not torch.equal(save_model[name], param)):
                     print ("Error: check that we load this item currectly - " + str(name))
-#                    exit(0)
+                    exit(0)
             if (not (save_loss_data == loss.data)): 
                 print ("Error: check that we load this item currectly - loss.data")
                 exit(0)
             for i in range(len(optimizer.param_groups[0]["params"])):
                 if (not torch.equal(save_optimizer[i], optimizer.param_groups[0]["params"][i])):
                     print ("Error: check that we load this item currectly - optimizer.param_groups[0][params][" + str(i) + "]")
-#                exit(0)
+                    exit(0)
         print ("I am here " + str(index))
         if (index == 2):
             print ("Test pass")
@@ -160,6 +163,7 @@ def test():
 
 shelf = pymm.shelf("mnist",size_mb=1024,pmem_path="/mnt/pmem0/", force_new=True)
 model = Net()
+#print (model.state_dict())
 #shelf.torch_create_empty_model(model, "mnist")
 
 ##for name, param in model.named_parameters():
@@ -170,13 +174,17 @@ model = Net()
 
 optimizer = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
 
+
+torch.save({"model": model.state_dict(),
+           "optimizer": optimizer.state_dict()}, "a1.txt")
+
+
 shelf.save({
                     'epoch': np.zeros(1),
-                    'model' : model,
-                    'optimizer' : optimizer,
+                    'model' : model.state_dict(),
+                    'optimizer' : optimizer.state_dict(),
                     'loss': torch.empty(1) 
-                }, shelf_var_name = "mnist", is_inplace=False)
-
+                }, shelf_var_name = "mnist")
 # items on the shelf
 print("get_item_names")
 for epoch in range(1, args['epochs'] + 1):

@@ -468,8 +468,8 @@ class shelf():
             metadata.tx_multivar_commit(entry._value_named_memory)
         tx_vars = []
 
-    def save(self, data, shelf_var_name, is_inplace=True):
-        checkpoint.save_manager(checkpoint, self, data, shelf_var_name, is_inplace)
+    def save(self, data, shelf_var_name):
+        checkpoint.save_manager(checkpoint, self, data, shelf_var_name)
 
     def load (self, target, shelf_var_name, is_by_var=True, is_inplace=True):
         if (is_by_var):
