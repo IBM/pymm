@@ -3,6 +3,7 @@ from ctypes import *
 from .check import paramcheck
 import torch
 import numpy as np
+from collections import OrderedDict
 
 class checkpoint():
        
@@ -17,25 +18,7 @@ class checkpoint():
     ###############################################
     def save_manager(self, shelf, data, shelf_var_name, is_inplace=True):
         type_name = type(data)
-
-        #torch model
-        if(self.is_type_torch_model(type_name)):
-            self.torch_save_model(self, shelf, data, shelf_var_name, is_inplace)
-            return
-
-        # Torch Optim   
-        if (self.is_type_torch_optimizer(type_name)):
-            self.torch_save_optimizer(self, shelf, data, shelf_var_name, is_inplace)
-            return
-
-        # torch in-place
-        if (is_inplace and self.is_type_torch(type_name)):
-            try:
-                print ("try inplace")
-                self.torch_save(self, shelf, data, shelf_var_name, is_inplace)
-                return
-            except:
-               print ("Go to setattr, the Inplace failed for " + shelf_var_name)
+        
         # list
         if (type_name is list):   
            self.list_save(self, shelf, data, shelf_var_name, is_inplace)
@@ -46,42 +29,36 @@ class checkpoint():
            self.dict_save(self, shelf, data, shelf_var_name, is_inplace)
            return
 
+        # ordered dict
+        if (issubclass(type_name, OrderedDict)):    
+           self.ordered_dict_save(self, shelf, data, shelf_var_name, is_inplace)
+           return
+
         # in-place Numpy
         if (is_inplace and type_name is np.ndarray):
-            try: 
+            if (shelf.__hasattr__(shelf_var_name)):
                 self.numpy_save(self, shelf, data, shelf_var_name, is_inplace)
                 return
-            except:
-               print ("Go to setattr, the Inplace failed for " + shelf_var_name)
+
+        # torch in-place
+        if (is_inplace and self.is_type_torch(type_name)):
+            if (shelf.__hasattr__(shelf_var_name)):
+                print (shelf_var_name)
+                self.torch_save(self, shelf, data, shelf_var_name, is_inplace)
+                return
 
          # regular item
+        print (type_name)
         setattr(shelf, shelf_var_name, data)
 
 
     ###############################################
     ###### save primitives #############
     ###############################################
-    # Save in-place Torch 
-    def torch_save(self, shelf, data, shelf_var_name, is_inplace):
-        with torch.no_grad():
-            getattr(shelf, shelf_var_name).copy_(data)
- 
-    # Save Torch Model
-    def torch_save_model(self, shelf, model, shelf_var_name, is_inplace):
-        for name, param in model.named_parameters():
-            self.save_manager(self, shelf, param, shelf_var_name + "__+model_#named_parameters_" + name , is_inplace)
-
-
-    # Save Torch Optimizer 
-    def torch_save_optimizer(self, shelf, opt, shelf_var_name, is_inplace):
-            for k,v in opt.state_dict().items():
-                self.save_manager(self, shelf, v, shelf_var_name + "__+optimizer_#state_dict_" + str(k), is_inplace)
 
      # list save 
     def list_save (self, shelf, list_items, shelf_var_name, is_inplace=True):
         for i in range(len(list_items)):
-           print (shelf_var_name)
-           print (type(list_items[i]))
            self.save_manager(self, shelf, list_items[i], shelf_var_name + "__+list_" +  str(i), is_inplace)
 
      # Dict save
@@ -89,11 +66,19 @@ class checkpoint():
         for name in data_dict.keys():
            self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+dict_" +  str(name), is_inplace)
 
+     # Ordered Dict save
+    def ordered_dict_save (self, shelf, data_dict, shelf_var_name, is_inplace=True):
+        for name in data_dict.keys():
+           self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+ordereddict_" +  str(name), is_inplace)
+ 
     # Save in-place Numpyarray
     def numpy_save(self, shelf, data, shelf_var_name, is_inplace=True):
             getattr(shelf, shelf_var_name)[:] = data
 
-
+    # Save in-place Torch 
+    def torch_save(self, shelf, data, shelf_var_name, is_inplace):
+        with torch.no_grad():
+            getattr(shelf, shelf_var_name).copy_(data)
 
 ###############################################
 ###############################################
@@ -116,7 +101,6 @@ class checkpoint():
 
         # list
         if (type_name is list):  
-           print (shelf_var_name)
            return self.list_load(self, shelf, target, shelf_var_name + "__+list_", is_inplace)
 
         # dict
@@ -177,7 +161,6 @@ class checkpoint():
     # load list 
     def list_load (self, shelf, list_items, shelf_var_name, is_inplace=True):
         # load inplace
-        print (type(list_items[7]))
         if (is_inplace):
             for i in range(len(list_items)):
                 list_items[i] = self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i), is_inplace)
