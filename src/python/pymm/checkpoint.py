@@ -4,9 +4,9 @@ from .check import paramcheck
 import torch
 import numpy as np
 from collections import OrderedDict
+import pickle
 
 class checkpoint():
-       
 
 ###############################################
 ###############################################
@@ -35,22 +35,28 @@ class checkpoint():
            return
 
         # in-place Numpy
-        if (is_inplace and type_name is np.ndarray):
+        if (type_name is np.ndarray):
             if (shelf.__hasattr__(shelf_var_name)):
                 self.numpy_save(self, shelf, data, shelf_var_name, is_inplace)
-                return
+            else:     
+                setattr(shelf, shelf_var_name, data)
+            return
 
         # torch in-place
-        if (is_inplace and self.is_type_torch(type_name)):
+        if (self.is_type_torch(type_name)):
             if (shelf.__hasattr__(shelf_var_name)):
-                print (shelf_var_name)
                 self.torch_save(self, shelf, data, shelf_var_name, is_inplace)
-                return
-
-         # regular item
-        print (type_name)
-        setattr(shelf, shelf_var_name, data)
-
+            else:   
+                setattr(shelf, shelf_var_name, data)
+            return
+ 
+        # basic shelf item
+        if ((type_name is int) or (type_name is bool) or (type_name is str) or (type_name is bytes) or (type_name is float)): 
+            setattr(shelf, shelf_var_name, data)
+        else:
+            print ("This type: " + str(type_name) + "is not support by the shelf, we save it on the shelf in byte format (using pickle)")
+            setattr(shelf, shelf_var_name + "__pickle", pickle.dumps(data))
+        
 
     ###############################################
     ###### save primitives #############
