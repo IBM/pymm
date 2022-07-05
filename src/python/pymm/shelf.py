@@ -228,12 +228,16 @@ class shelf():
             print("made torch_tensor instance from copy '{}' on shelf".format(name))
         elif isinstance(value, str):
             self.__dict__[name] = pymm.string.build_from_copy(self.mr, name, value)
+            print("made str instance from copy '{}' on shelf".format(name))
         elif isinstance(value, float):
             self.__dict__[name] = pymm.float_number.build_from_copy(self.mr, name, value)
+            print("made float instance from copy '{}' on shelf".format(name))
         elif isinstance(value, int):
             self.__dict__[name] = pymm.integer_number.build_from_copy(self.mr, name, value)
+            print("made int instance from copy '{}' on shelf".format(name))
         elif isinstance(value, bytes):
             self.__dict__[name] = pymm.bytes.build_from_copy(self.mr, name, value)
+            print("made bytes/pickle instance from copy '{}' on shelf".format(name))
         elif issubclass(type(value), pymm.ShelvedCommon):
             raise RuntimeError('persistent reference not yet supported - use a volatile one!')            
         elif type(value) == type(None):
@@ -472,4 +476,4 @@ class shelf():
         checkpoint.save_manager(checkpoint, self, data, shelf_var_name)
 
     def load (self, shelf_var_name):
-        return checkpoint.load_manger(checkpoint, self, shelf_var_name)
+        return checkpoint.load_manager(checkpoint, self, shelf_var_name)

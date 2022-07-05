@@ -16,46 +16,48 @@ class checkpoint():
     ###############################################
     ######### save checkpoint manager #################
     ###############################################
-    def save_manager(self, shelf, data, shelf_var_name, is_inplace=True):
+    def save_manager(self, shelf, data, shelf_var_name):
         type_name = type(data)
         
         # list
         if (type_name is list):   
-           self.list_save(self, shelf, data, shelf_var_name, is_inplace)
+           self.list_save(self, shelf, data, shelf_var_name)
            return
 
         # dict
         if (type_name is dict):    
-           self.dict_save(self, shelf, data, shelf_var_name, is_inplace)
+           self.dict_save(self, shelf, data, shelf_var_name)
            return
 
         # ordered dict
         if (issubclass(type_name, OrderedDict)):    
-           self.ordered_dict_save(self, shelf, data, shelf_var_name, is_inplace)
+           self.ordered_dict_save(self, shelf, data, shelf_var_name)
            return
 
         # in-place Numpy
         if (type_name is np.ndarray):
+            shelf_var_name = shelf_var_name + "__#" + type_name.__name__ + "#"
             if (shelf.__hasattr__(shelf_var_name)):
-                self.numpy_save(self, shelf, data, shelf_var_name, is_inplace)
+                self.numpy_save(self, shelf, data, shelf_var_name)
             else:     
                 setattr(shelf, shelf_var_name, data)
             return
 
         # torch in-place
         if (self.is_type_torch(type_name)):
+            shelf_var_name = shelf_var_name + "__#" + type_name.__name__ + "#"
             if (shelf.__hasattr__(shelf_var_name)):
-                self.torch_save(self, shelf, data, shelf_var_name, is_inplace)
+                self.torch_save(self, shelf, data, shelf_var_name)
             else:   
                 setattr(shelf, shelf_var_name, data)
             return
  
         # basic shelf item
-        if ((type_name is int) or (type_name is bool) or (type_name is str) or (type_name is bytes) or (type_name is float)): 
+        if ((type_name is int) or (type_name is bool) or (type_name is str) or (type_name is bytes) or (type_name is float)):
+            shelf_var_name = shelf_var_name + "__#" + type_name.__name__ +"#"
             setattr(shelf, shelf_var_name, data)
         else:
-            print ("This type: " + str(type_name) + "is not support by the shelf, we save it on the shelf in byte format (using pickle)")
-            setattr(shelf, shelf_var_name + "__pickle", pickle.dumps(data))
+            setattr(shelf, shelf_var_name + "__#pickle#", pickle.dumps(data))
         
 
     ###############################################
@@ -63,26 +65,26 @@ class checkpoint():
     ###############################################
 
      # list save 
-    def list_save (self, shelf, list_items, shelf_var_name, is_inplace=True):
+    def list_save (self, shelf, list_items, shelf_var_name):
         for i in range(len(list_items)):
-           self.save_manager(self, shelf, list_items[i], shelf_var_name + "__+list_" +  str(i), is_inplace)
+           self.save_manager(self, shelf, list_items[i], shelf_var_name + "__+list_" + str(i))
 
      # Dict save
-    def dict_save (self, shelf, data_dict, shelf_var_name, is_inplace=True):
+    def dict_save (self, shelf, data_dict, shelf_var_name):
         for name in data_dict.keys():
-           self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+dict_" +  str(name), is_inplace)
+           self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+dict_#" +  type(name).__name__ + "#_#"  + str(name) +"#" )
 
      # Ordered Dict save
-    def ordered_dict_save (self, shelf, data_dict, shelf_var_name, is_inplace=True):
+    def ordered_dict_save (self, shelf, data_dict, shelf_var_name):
         for name in data_dict.keys():
-           self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+ordereddict_" +  str(name), is_inplace)
+           self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+ordereddict_#" + type(name).__name__ + "#_#"  + str(name) +"#")
  
     # Save in-place Numpyarray
-    def numpy_save(self, shelf, data, shelf_var_name, is_inplace=True):
+    def numpy_save(self, shelf, data, shelf_var_name):
             getattr(shelf, shelf_var_name)[:] = data
 
     # Save in-place Torch 
-    def torch_save(self, shelf, data, shelf_var_name, is_inplace):
+    def torch_save(self, shelf, data, shelf_var_name):
         with torch.no_grad():
             getattr(shelf, shelf_var_name).copy_(data)
 
@@ -95,120 +97,172 @@ class checkpoint():
     ######### load checkpoint manager #################
     ###############################################
 
-    def load_by_var_manager (self, shelf, target, shelf_var_name, is_inplace=True):
-        type_name = type(target)
+    def load_manager (self, shelf, shelf_var_name):
+        
+        all_items = shelf.get_item_names()
+        '''
+        Add only items withi the header shelf_var_name
+        '''
+        items = []
+        for item in all_items:
+            if (item.startswith(shelf_var_name)):
+                items.append(item)
 
-        if(self.is_type_torch_model(type_name)):
-            return self.torch_load_model(self, shelf, target, shelf_var_name, is_inplace)
+        '''
+        No items for this shelf_var_name
+        '''
+        if (len(items) == 0):
+            print ("no items to load")
+            return None
 
-        # Torch Optim
-        if (self.is_type_torch_optimizer(type_name)):
-            return self.torch_load_optimizer(self, shelf, target, shelf_var_name, is_inplace)
+        '''
+        One type - a basic type
+        '''
+        if (len(items) == 1) and ("+" not in items[0]):
+            chop_item = items[0].split(shelf_var_name + "__")[1]
+            return self.load_basic_type(self, shelf, items[0], [chop_item], 0)
+         
+        items.sort()
+        chop_first_item = items[0].split(shelf_var_name + "__")[1]
+        ret_val = self.load_initial_type(chop_first_item)
 
-        # list
-        if (type_name is list):  
-           return self.list_load(self, shelf, target, shelf_var_name + "__+list_", is_inplace)
+        for item in items:
+            chop_item = item.split(shelf_var_name + "__")[1]
+            item_split = chop_item.split("__")
+            index = 0
+            ret_val = self.load_item(self, shelf, item, item_split, index, ret_val)
+            print (ret_val)
+        exit(0)    
+        return ret_val        
 
-        # dict
-        if (type_name is dict):    
-           return self.dict_load(self, shelf, target, shelf_var_name + "__+dict_", is_inplace)
+    def load_initial_type (item):
+        if item.startswith("+dict"):
+            return {}
+        if item.startswith("+ordereddict"):
+            return OrderedDict() 
+        if item.startswith("+list"):
+            return []
+        # Not supported type
+        print ("There is something wrong with initialization, the first item is: " +  item)
+        exit(0)
 
-        # get the item from the shelf
-        return self.org_type(getattr(shelf, shelf_var_name))
+
+    def load_item (self, shelf, item_name, item_split, index, ret_val):    
+        if item_split[index].startswith("+"):
+            '''
+            load complex type
+            '''
+            return self.load_complex_type(self, shelf, item_name, item_split, index, ret_val)
+        if item_split[index].startswith("#"):
+            '''
+            load basic type
+            '''
+            return self.load_basic_type(self, shelf, item_name, item_split, index)
+        '''
+        Not supported type
+        '''
+        print ("something is wrong with loading " +  item)
+        exit(0)   
+ 
+
+    def load_basic_type (self, shelf, item_name, item_split, index):
+        shelf_type = item_split[index].split("#")[1]
+        return self.cast_var(shelf_type, getattr(shelf, item_name))
+
+    def load_complex_type (self, shelf, item_name, item_split, index, ret_val):
+        if item_split[index].startswith("+dict"):
+            '''
+            load dict 
+            '''
+            if (ret_val is None):
+                ret_val = {}
+            return self.load_dict(self, shelf, item_name, item_split, index, ret_val)
+        if item_split[index].startswith("+ordereddict"):
+            '''
+            load ordereddict
+            '''
+            if (ret_val is None):
+                ret_val = OrderedDict()
+            return self.load_ordereddict(self, shelf, item_name, item_split, index, ret_val)
+
+        if item_split[index].startswith("+list"):
+            '''
+            load list
+            '''
+            if (ret_val is None):
+                ret_val = []
+            return self.load_list(self, shelf, item_name, item_split, index, ret_val)
+        '''
+        Not supported type
+        '''
+        print ("There is something wrong with loading " +  item_name + \
+                " --- we are at item_split " + item_split[index])
+        exit(0)
+
+ 
+      
+    def load_dict (self, shelf, item_name, item_split, index, ret_val):
+        split_item = item_split[index].split("+dict_")[1].split("#")
+        key_name = split_item[3]
+        key_type = split_item[1]
+        index += 1
+        if self.cast_var(key_type, key_name) not in ret_val: 
+            ret_val[self.cast_var(key_type, key_name)] = None
+        ret_val[self.cast_var(key_type, key_name)] = \
+                self.load_item(self, shelf, item_name, item_split, index, ret_val[self.cast_var(key_type, key_name)])   
+        return ret_val        
+
+    def load_ordereddict (self, shelf, item_name, item_split, index, ret_val):
+        split_item = item_split[index].split("+ordereddict_")[1].split("#")
+        key_name = split_item[3]
+        key_type = split_item[1]
+        index += 1
+        print (self.cast_var(key_type, key_name))
+        if self.cast_var(key_type, key_name) not in ret_val:  
+            ret_val[self.cast_var(key_type, key_name)] = None
+        print (key_name)    
+        ret_val[self.cast_var(key_type, key_name)] = \
+                self.load_item(self, shelf, item_name, item_split, index, ret_val[self.cast_var(key_type, key_name)])   
+        return ret_val        
+
+    def load_list (self, shelf, item_name, item_split, index, ret_val):
+        list_idx = int(item_split[index].split("_")[1])
+        if (len(ret_val) <= list_idx):
+            # we append one item
+            assert (len(ret_val) == list_idx)
+            ret_val.append(None)
+        index += 1    
+        ret_val[list_idx] = \
+                self.load_item(self, shelf, item_name, item_split, index, ret_val[list_idx])   
+        return ret_val        
+
+
+
+
+
 
     ###############################################
     ###### load primitives ##################
     ###############################################
 
-    # load Torch Model
-    def torch_load_model(self, shelf, model, shelf_var_name, is_inplace):
-        for name, param in model.named_parameters():
-            shelf_torch = self.load_by_var_manager(self, shelf, param, shelf_var_name + "__+model_#named_parameters_" + name, is_inplace)
-            split_name = (name.rsplit('.', 1)) # split_name[0]: nmodel variable name, split_name[1]: bias /weight
-            model_item = getattr(getattr(model, split_name[0].split(".")[0]), split_name[1])
-            with torch.no_grad():
-                 model_item.copy_(shelf_torch)
-        return model
 
-    # load Torch Optimizer 
-    # in_place
-    def torch_load_optimizer(self, shelf, opt, shelf_var_name, is_inplace):
-        for k1, v1 in opt.state_dict().items():
-             # Note 1: The optimizer.param_groups["param"][] does not contain the full tensor, 
-             # but only an index to model.tensor, so we only save the index, and verify that
-             # the optimizer.param_groups["param"][] is in the correct order during the load operation.
-            if (k1 == "param_groups"):
-                for i in range(len(v1)):
-                    for k2, v2 in v1[i].items():
-                        if (k2 == "params"):
-                            for j in range(len(v2)):
-                                # verification stage
-                                if (v2[j] != getattr(shelf, shelf_var_name + "__+optimizer_#state_dict_param_groups__+list_" + str(i) + "__+dict_params__+list_" + str(j))):
-                                    print ("Error in load optimizer, the optimizer.param_groups[\"params\"] are not correct")
-                                    exit(0)
-                                
-                        else:    
-                            opt.param_groups[i][k2] = self.load_by_var_manager(self, shelf, v2, shelf_var_name + "__+optimizer_#state_dict_param_groups__+list_" + str(i) + "__+dict_" + str(k2), is_inplace)
-
-            # Note 2: The optimizer.state dictionary is empty, so we add the saved values
-            if (k1 == "state"):
-                list_shelf_items = shelf.get_item_names()
-                shelf_val_2_add = []
-                header = shelf_var_name + "__+optimizer_#state_dict_state__+dict_"
-                for i in range(len(list_shelf_items)):
-                    if (header in list_shelf_items[i]):
-                       shelf_val_2_add.append(list_shelf_items[i].split(header, maxsplit=1)[1])
-                for i in range(len(shelf_val_2_add)):
-                    first_split = (shelf_val_2_add[i].split("__"))
-                    second_split = first_split[1].split("+dict_")
-                    opt.state[first_split[0]][second_split[1]] = self.org_type(getattr(shelf, header + shelf_val_2_add[i]))
-        return 
-    
-    # load list 
-    def list_load (self, shelf, list_items, shelf_var_name, is_inplace=True):
-        # load inplace
-        if (is_inplace):
-            for i in range(len(list_items)):
-                list_items[i] = self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i), is_inplace)
-            return  
-        # return the value
-        else:
-            tmp_list = []
-            for i in range(len(list_items)):
-               tmp_list.append(self.load_by_var_manager(self, shelf, list_items[i], shelf_var_name + str(i)), is_inplace)
-            return tmp_list
-
-
-
-
-
-     # load dict
-    def dict_load (self, shelf, data_dict, shelf_var_name, is_inplace=True):
-        # load inplace
-        if (is_inplace):
-            for name in data_dict.keys():
-               data_dict[name] = self.load_by_var_manager(self, shelf, data_dict[name], shelf_var_name + name, is_inplace)
-            return    
-        else: 
-        # return the value
-            tmp_dict = {}
-            for name in data_dict.keys():
-                tmp_dict[name] = self.load_by_var_manager(self, shelf, data_dict[name], shelf_var_name + name, is_inplace)
-            return tmp_dict   
-
-    def org_type (shelf_var):
-        if ("pymm.integer_number" in str(type(shelf_var))):
-            return int(shelf_var)
-        if ("pymm.float_number" in str(type(shelf_var))):
-            return float(shelf_var)
-        if ("pymm.bytes" in str(type(shelf_var))):
-            return bytes(shelf_var)
-        if ("pymm.string" in str(type(shelf_var))):
-            return str(shelf_var)
-        if ("pymm.ndarray" in str(type(shelf_var))):
-            return np.array(shelf_var)
-        if ("pymm.torch_tensor" in str(type(shelf_var))):
-            return torch.clone(shelf_var)
+    def cast_var (type_var, var):
+        if (type_var  == "str"):
+            return str(var)
+        if (type_var == "int"):
+            return int(var)
+        if (type_var == "float"):
+            return float(var)
+        if (type_var == "bytes"):
+            return bytes(var)
+        if (type_var == "bool"):
+            return bool(var)
+        if (type_var == "ndarray"):
+            return np.array(var)
+        if (type_var == "Tensor"):
+            return torch.clone(var)
+        if (type_var == "pickle"):
+            return pickle.loads(bytes(var))
          
 ###############################################
 ###############################################
@@ -221,9 +275,3 @@ class checkpoint():
 
     def is_type_torch(type_name):
          return ("torch.nn.parameter" in str(type_name) or "torch.Tensor" in str(type_name))
-
-    def is_type_torch_model(type_name):
-         return (issubclass(type_name, torch.nn.Module))
-
-    def is_type_torch_optimizer(type_name):
-        return("torch.optim" in str(type_name))
