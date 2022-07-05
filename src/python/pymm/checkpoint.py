@@ -131,8 +131,6 @@ class checkpoint():
             item_split = chop_item.split("__")
             index = 0
             ret_val = self.load_item(self, shelf, item, item_split, index, ret_val)
-            print (ret_val)
-        exit(0)    
         return ret_val        
 
     def load_initial_type (item):
@@ -217,10 +215,8 @@ class checkpoint():
         key_name = split_item[3]
         key_type = split_item[1]
         index += 1
-        print (self.cast_var(key_type, key_name))
         if self.cast_var(key_type, key_name) not in ret_val:  
             ret_val[self.cast_var(key_type, key_name)] = None
-        print (key_name)    
         ret_val[self.cast_var(key_type, key_name)] = \
                 self.load_item(self, shelf, item_name, item_split, index, ret_val[self.cast_var(key_type, key_name)])   
         return ret_val        
