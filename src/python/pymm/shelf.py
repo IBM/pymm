@@ -471,6 +471,5 @@ class shelf():
     def save(self, data, shelf_var_name):
         checkpoint.save_manager(checkpoint, self, data, shelf_var_name)
 
-    def load (self, target, shelf_var_name, is_by_var=True, is_inplace=True):
-        if (is_by_var):
-            return checkpoint.load_by_var_manager(checkpoint, self, target, shelf_var_name, is_inplace)
+    def load (self, shelf_var_name):
+        return checkpoint.load_manger(checkpoint, self, shelf_var_name)

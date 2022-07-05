@@ -175,9 +175,10 @@ model = Net()
 optimizer = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
 
 
-torch.save({"model": model.state_dict(),
-           "optimizer": optimizer.state_dict()}, "a1.txt")
-
+torch.save(model.state_dict(), "a1.txt")
+#           "optimizer": optimizer.state_dict()}, "a1.txt")
+type(torch.load("a1.txt"))
+model.load_state_dict(torch.load("a1.txt"))
 
 shelf.save({
                     'epoch': np.zeros(1),
@@ -185,6 +186,8 @@ shelf.save({
                     'optimizer' : optimizer.state_dict(),
                     'loss': torch.empty(1) 
                 }, shelf_var_name = "mnist")
+shelf.load(shelf_var_name = "mnist")
+exit(0)
 # items on the shelf
 print("get_item_names")
 for epoch in range(1, args['epochs'] + 1):
