@@ -18,7 +18,6 @@ class checkpoint():
     ###############################################
     def save_manager(self, shelf, data, shelf_var_name):
         type_name = type(data)
-        
         # list
         if (type_name is list):   
            self.list_save(self, shelf, data, shelf_var_name)
@@ -34,7 +33,7 @@ class checkpoint():
            self.ordered_dict_save(self, shelf, data, shelf_var_name)
            return
 
-        # in-place Numpy
+        # Numpy
         if (type_name is np.ndarray):
             shelf_var_name = shelf_var_name + "__#" + type_name.__name__ + "#"
             if (shelf.__hasattr__(shelf_var_name)):
@@ -43,7 +42,7 @@ class checkpoint():
                 setattr(shelf, shelf_var_name, data)
             return
 
-        # torch in-place
+        # Torch 
         if (self.is_type_torch(type_name)):
             shelf_var_name = shelf_var_name + "__#" + type_name.__name__ + "#"
             if (shelf.__hasattr__(shelf_var_name)):
@@ -66,16 +65,22 @@ class checkpoint():
 
      # list save 
     def list_save (self, shelf, list_items, shelf_var_name):
+        if (len(list_items) == 0):
+            setattr(shelf, shelf_var_name + "__+list_empty", 0)
         for i in range(len(list_items)):
            self.save_manager(self, shelf, list_items[i], shelf_var_name + "__+list_" + str(i))
 
      # Dict save
     def dict_save (self, shelf, data_dict, shelf_var_name):
+        if (not bool(data_dict)):
+            setattr(shelf, shelf_var_name + "__+dict_empty", 0)
         for name in data_dict.keys():
            self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+dict_#" +  type(name).__name__ + "#_#"  + str(name) +"#" )
 
      # Ordered Dict save
     def ordered_dict_save (self, shelf, data_dict, shelf_var_name):
+        if (not bool(data_dict)):
+            setattr(shelf, shelf_var_name + "__+ordereddict_empty", 0)
         for name in data_dict.keys():
            self.save_manager(self, shelf, data_dict[name], shelf_var_name + "__+ordereddict_#" + type(name).__name__ + "#_#"  + str(name) +"#")
  
@@ -140,10 +145,8 @@ class checkpoint():
             return OrderedDict() 
         if item.startswith("+list"):
             return []
-        # Not supported type
-        print ("There is something wrong with initialization, the first item is: " +  item)
-        exit(0)
-
+        else: 
+            return None
 
     def load_item (self, shelf, item_name, item_split, index, ret_val):    
         if item_split[index].startswith("+"):
@@ -197,9 +200,9 @@ class checkpoint():
                 " --- we are at item_split " + item_split[index])
         exit(0)
 
- 
-      
     def load_dict (self, shelf, item_name, item_split, index, ret_val):
+        if (item_split[index] == "+dict_empty"):
+            return {}
         split_item = item_split[index].split("+dict_")[1].split("#")
         key_name = split_item[3]
         key_type = split_item[1]
@@ -211,6 +214,8 @@ class checkpoint():
         return ret_val        
 
     def load_ordereddict (self, shelf, item_name, item_split, index, ret_val):
+        if (item_split[index] == "+ordereddict_empty"):
+            return OrderedDict()
         split_item = item_split[index].split("+ordereddict_")[1].split("#")
         key_name = split_item[3]
         key_type = split_item[1]
@@ -222,6 +227,8 @@ class checkpoint():
         return ret_val        
 
     def load_list (self, shelf, item_name, item_split, index, ret_val):
+        if (len(item_split[index]) == 0):
+            return []
         list_idx = int(item_split[index].split("_")[1])
         if (len(ret_val) <= list_idx):
             # we append one item

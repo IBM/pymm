@@ -1,5 +1,9 @@
 #Import Libraries
-
+'''
+In this test, We save and load the MNISM model before and during training, 
+in addition to the model we save the optimizer the loass and the epoch numebr.
+We verify the the saved parametres are identical to the running parameters.
+'''
 
 from __future__ import print_function
 import argparse
@@ -26,7 +30,96 @@ args['log_interval']=10
 args['cuda']=False
 
 
+def compare_item (item1, item2, name):
+    if (type(item1) != type(item2)):
+        print ("Mismatch found type error in " + name + ": " + str(type(item1)) + "/" + str(type(item2)))
+        exit(0)
+    if (item1 != item2):
+        print ("Mismatch found type error in " + name + ": " + str(item1) + "/" + str(item2))
+        exit(0)
+        
 
+
+def compare_models(model_1, model_2):
+    models_differ = 0
+    for key_item_1, key_item_2 in zip(model_1.state_dict().items(), model_2.state_dict().items()):
+        if torch.equal(key_item_1[1], key_item_2[1]):
+            pass
+        else:
+           print('Mismatch found at', key_item_1[0])
+           exit(0)
+    if models_differ == 0:
+        print('Models match perfectly! :)')
+
+def compare_optimizer(opt_1, opt_2):
+    opt_differ = 0
+    for key_item_1, key_item_2 in zip(opt_1.state_dict().items(), opt_2.state_dict().items()):
+#        print (key_item_1[0])
+        if (type(key_item_1[1]) == dict):
+            compare_dict(key_item_1[1], key_item_2[1])
+            continue
+        if (type(key_item_1[1]) == list):
+            compare_list(key_item_1[1], key_item_2[1])
+            continue
+        else:
+            if type(key_item_1).__name__ is "Tensor":
+                if torch.equal(key_item_1[1], key_item_2[1]):
+                    continue
+                else:
+                   print('Mismatch found at', key_item_1[0])
+                   exit(0)
+            if (key_item_1[1] == key_item_2[1]):
+                pass
+            else: 
+                print('Mismatch found at', key_item_1[0])
+                exit(0)
+    print('Optimizer match perfectly! :)')
+
+
+def compare_dict (dict1, dict2):
+    for key1 in dict1.keys(): 
+#        print (key1)
+        if (type(dict1[key1]) is dict):
+            compare_dict(dict1[key1], dict2[key1])
+            continue
+        if (type(dict1[key1]) is list):
+            compare_list(dict1[key1], dict2[key1])
+            continue
+        else:
+            if type(dict1[key1]).__name__ is "Tensor":
+                if torch.equal(dict1[key1], dict2[key1]):
+                    continue
+                else:
+                   print('Mismatch found at {} --- ', key1)
+                   exit(0)
+            if (dict1[key1] == dict2[key1]):
+                pass
+            else: 
+                print("Mismatch found at--- " + key1 + "--- "  + str(dict1[key1]) + "/"\
+                        + str(dict2[key1])) 
+                exit(0)
+
+def compare_list (list1, list2):
+    for idx in range(len(list1)):   
+ #       print ("list " + str(idx))
+        if (type(list1[idx]) == dict):
+            compare_dict(list1[idx], list2[idx])
+            continue
+        if (type(list1[idx]) == list):
+            compare_list(list1[idx], list2[idx])
+            continue
+        else:
+            if type(list1[idx]).__name__ is "torch.Tensor":
+                if torch.equal(list1[idx], list2[idx]):
+                    continue
+                else:
+                   print('Mismatch found at [] --- ', list1[idx])
+                   exit(0)
+            if (list1[idx] == list2[idx]):
+                pass
+            else: 
+                print('Mismatch found  at [] --- ', list1[idx])
+                exit(0)
 
 #load the data
 train_loader = torch.utils.data.DataLoader(
@@ -94,53 +187,26 @@ def train(epoch):
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.data))
-
-        # save every two loops
-#        if (not (index % 2)):
-        if (1):
-            shelf.save({
-                    'epoch': np.array([epoch]),
-#                    'model' : model.state_dict(),
-                    'optimizer' : optimizer.state_dict(),
-                    'loss': loss.data 
-            }, shelf_var_name = "mnist")
-            exit(0)
-            torch.save({"model": model.state_dict(),
-                         "optimizer": optimizer.state_dict()}, "a2.txt")
-            print (optimizer.state)
-            for name, param in model.named_parameters():
-                save_model[str(name)] = torch.clone(param) 
-            save_loss_data = loss.data
-            save_optimizer = []
-            for i in range(len(optimizer.param_groups[0]["params"])):
-                save_optimizer.append(torch.clone(optimizer.param_groups[0]["params"][i]))
-         
-        # load the saved value
-        if (index == 1):
-            print ("load (iterator: i = " + str(index-1) + "), we are in iterator: ", str(index))
-            model = shelf.load(model, "mnist__+dict_model")
-            print (optimizer.param_groups[0]['dampening'])
-            shelf.load(optimizer, "mnist__+dict_optimizer")
-            print (optimizer.param_groups[0]['dampening'])
-            epoch = shelf.load(epoch, "mnist__+dict_epoch")
-            loss.data = shelf.load(loss.data, "mnist__+dict_loss")
-            # check for correctness
-            for name, param in model.named_parameters():
-                if (not torch.equal(save_model[name], param)):
-                    print ("Error: check that we load this item currectly - " + str(name))
-                    exit(0)
-            if (not (save_loss_data == loss.data)): 
-                print ("Error: check that we load this item currectly - loss.data")
-                exit(0)
-            for i in range(len(optimizer.param_groups[0]["params"])):
-                if (not torch.equal(save_optimizer[i], optimizer.param_groups[0]["params"][i])):
-                    print ("Error: check that we load this item currectly - optimizer.param_groups[0][params][" + str(i) + "]")
-                    exit(0)
-        print ("I am here " + str(index))
-        if (index == 2):
-            print ("Test pass")
-            exit(0)    
         index+=1    
+
+        shelf.save({
+                'epoch': epoch,
+                'model' : model.state_dict(),
+                'optimizer' : optimizer.state_dict(),
+                'loss': loss.data 
+        }, shelf_var_name = "mnist" + str(epoch))
+        model_shelf = Net()
+        optimizer_shelf = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
+        checkpoint_shelf = shelf.load("mnist" + str(epoch))
+        model_shelf.load_state_dict(checkpoint_shelf['model'])
+        optimizer_shelf.load_state_dict(checkpoint_shelf['optimizer'])
+        
+        compare_models(model, model_shelf)
+        compare_optimizer(optimizer, optimizer_shelf)
+        compare_item(epoch, checkpoint_shelf['epoch'], "epoch")
+        compare_item(loss, checkpoint_shelf['loss'], "loss")
+        print ("Test pass!!!!")
+        exit(0)
 
 def test():
     model.eval()
@@ -163,33 +229,26 @@ def test():
 
 shelf = pymm.shelf("mnist",size_mb=1024,pmem_path="/mnt/pmem0/", force_new=True)
 model = Net()
-#print (model.state_dict())
-#shelf.torch_create_empty_model(model, "mnist")
-
-##for name, param in model.named_parameters():
-## setattr(shelf, name, torch.empty(param.size()))
-
-#if args['cuda']:
-#    model.cuda()
 
 optimizer = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
 
 
-torch.save(model.state_dict(), "a1.txt")
-#           "optimizer": optimizer.state_dict()}, "a1.txt")
-type(torch.load("a1.txt"))
-model.load_state_dict(torch.load("a1.txt"))
-
 shelf.save({
-                    'epoch': np.zeros(1),
+                    'epoch': 0,
                     'model' : model.state_dict(),
                     'optimizer' : optimizer.state_dict(),
                     'loss': torch.empty(1) 
-                }, shelf_var_name = "mnist")
-shelf.load(shelf_var_name = "mnist")
-exit(0)
+                }, shelf_var_name = "mnist" + str(0))
+
+model_shelf = Net()
+optimizer_shelf = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
+checkpoint_shelf = shelf.load("mnist" + str(0))
+optimizer_shelf.load_state_dict(checkpoint_shelf['optimizer'])
+compare_optimizer(optimizer, optimizer_shelf)
+model_shelf.load_state_dict(checkpoint_shelf['model'])
+compare_models(model, model_shelf)
+compare_optimizer(optimizer, optimizer)
 # items on the shelf
-print("get_item_names")
 for epoch in range(1, args['epochs'] + 1):
     train(epoch)
 #    test()
