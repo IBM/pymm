@@ -106,7 +106,7 @@ class checkpoint():
         
         all_items = shelf.get_item_names()
         '''
-        Add only items withi the header shelf_var_name
+        Add only items with the header shelf_var_name
         '''
         items = []
         for item in all_items:
@@ -180,7 +180,7 @@ class checkpoint():
             return self.load_dict(self, shelf, item_name, item_split, index, ret_val)
         if item_split[index].startswith("+ordereddict"):
             '''
-            load ordereddict
+            load ordered dict
             '''
             if (ret_val is None):
                 ret_val = OrderedDict()
