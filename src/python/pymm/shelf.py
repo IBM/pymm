@@ -471,9 +471,14 @@ class shelf():
             assert metadata != None
             metadata.tx_multivar_commit(entry._value_named_memory)
         tx_vars = []
-
+    '''
+    Save variables on the shelf
+    '''
     def save(self, data, shelf_var_name):
         checkpoint.save_manager(checkpoint, self, data, shelf_var_name)
 
+    '''
+    Load variables from the shelf
+    '''    
     def load (self, shelf_var_name):
         return checkpoint.load_manager(checkpoint, self, shelf_var_name)
