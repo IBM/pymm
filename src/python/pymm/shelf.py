@@ -24,12 +24,13 @@ import numpy
 import torch
 import weakref
 import numpy as np
-import torch
 import ctypes
+import inspect
 
 from .metadata import *
 from .memoryresource import MemoryResource
 from .check import methodcheck
+from .checkpoint import *
 
 _decref = ctypes.pythonapi.Py_DecRef
 _decref.argtypes = [ctypes.py_object]
@@ -76,7 +77,6 @@ class shelf():
         self.name = name
         self.mr = MemoryResource(name, size_mb, pmem_path=pmem_path, backend=backend,
                                  mm_plugin=mm_plugin, load_addr=load_addr, force_new=force_new)
-        
         if self.mr == None:
             raise RuntimeError('shelf initialization failed')
         
@@ -228,12 +228,16 @@ class shelf():
             print("made torch_tensor instance from copy '{}' on shelf".format(name))
         elif isinstance(value, str):
             self.__dict__[name] = pymm.string.build_from_copy(self.mr, name, value)
+            print("made str instance from copy '{}' on shelf".format(name))
         elif isinstance(value, float):
             self.__dict__[name] = pymm.float_number.build_from_copy(self.mr, name, value)
+            print("made float instance from copy '{}' on shelf".format(name))
         elif isinstance(value, int):
             self.__dict__[name] = pymm.integer_number.build_from_copy(self.mr, name, value)
+            print("made int instance from copy '{}' on shelf".format(name))
         elif isinstance(value, bytes):
             self.__dict__[name] = pymm.bytes.build_from_copy(self.mr, name, value)
+            print("made bytes/pickle instance from copy '{}' on shelf".format(name))
         elif issubclass(type(value), pymm.ShelvedCommon):
             raise RuntimeError('persistent reference not yet supported - use a volatile one!')            
         elif type(value) == type(None):
@@ -259,7 +263,10 @@ class shelf():
         else:
             return self.__dict__[name]
 #            return weakref.ref(self.__dict__[name])
-            
+          
+    def __hasattr__(self, name):
+        return (name in self.__dict__)
+
     @methodcheck(types=[])
     def get_item_names(self, all=False):
         '''
@@ -272,7 +279,6 @@ class shelf():
             if all==False and s[0] == '-':
                 continue
             items.append(s)
-                
                 
         return items
             
@@ -465,4 +471,14 @@ class shelf():
             assert metadata != None
             metadata.tx_multivar_commit(entry._value_named_memory)
         tx_vars = []
+    '''
+    Save variables on the shelf
+    '''
+    def save(self, data, shelf_var_name):
+        checkpoint.save_manager(checkpoint, self, data, shelf_var_name)
 
+    '''
+    Load variables from the shelf
+    '''    
+    def load (self, shelf_var_name):
+        return checkpoint.load_manager(checkpoint, self, shelf_var_name)
