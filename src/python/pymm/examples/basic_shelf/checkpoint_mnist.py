@@ -17,6 +17,12 @@ import pymm
 import numpy as np
 import sys
 
+'''
+In this test: using MNIST dataset, we train the model, save it,
+and load it again to an empty model, then compare whether all variables are the same. 
+'''
+
+
 args={}
 kwargs={}
 args['batch_size']=1000
@@ -197,14 +203,16 @@ def train(epoch):
         }, shelf_var_name = "mnist" + str(epoch))
         model_shelf = Net()
         optimizer_shelf = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
+        loss_shelf = F.nll_loss(output, target)
         checkpoint_shelf = shelf.load("mnist" + str(epoch))
         model_shelf.load_state_dict(checkpoint_shelf['model'])
         optimizer_shelf.load_state_dict(checkpoint_shelf['optimizer'])
-        
+        loss_shelf.data = checkpoint_shelf['loss']
         compare_models(model, model_shelf)
         compare_optimizer(optimizer, optimizer_shelf)
         compare_item(epoch, checkpoint_shelf['epoch'], "epoch")
-        compare_item(loss, checkpoint_shelf['loss'], "loss")
+        compare_item(loss, loss_shelf, "loss")
+
         print ("Test pass!!!!")
         exit(0)
 
