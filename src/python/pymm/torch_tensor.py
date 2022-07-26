@@ -80,12 +80,13 @@ class torch_tensor(Shadow):
     def build_from_copy(memory_resource: MemoryResource, name: str, tensor):
         new_tensor = shelved_torch_tensor(memory_resource,
                                           name,
-                                          shape = tensor.detach().numpy(),
+                                          shape = tensor.shape,
                                           dtype = tensor.dtype,
-                                          requires_grad = tensor.requires_grad)
+                                          requires_grad = False)
         
         # now copy the data
-        np.copyto(new_tensor._base_ndarray, tensor.to('cpu').detach().numpy())
+        # np.copyto(new_tensor._base_ndarray, tensor.to('cpu').detach().numpy())
+        new_tensor.copy_(tensor)
 
 #        if tensor.dim() is 0:
 #            new_tensor.data = tensor.clone()
@@ -129,7 +130,8 @@ class shelved_torch_tensor(torch.Tensor, ShelvedCommon):
         if value_memory == None: # does not exist yet
 
             if isinstance(shape, torch.Size):
-                ndshape = [shape.numel()]
+                # ndshape = [shape.numel()]
+                ndshape = shape
             else:
                 ndshape = np.shape(shape)
 
@@ -169,7 +171,7 @@ class shelved_torch_tensor(torch.Tensor, ShelvedCommon):
         self._metadata_key = metadata_key
         self.name_on_shelf = name
         self.requires_grad = requires_grad # by default .grad is not there
-        self.retains_grad = False # by default .grad is not there 
+        # self.retains_grad = False # by default .grad is not there 
         return self
 
     def __delete__(self, instance):
