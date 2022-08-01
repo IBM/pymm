@@ -85,12 +85,7 @@ class torch_tensor(Shadow):
                                           requires_grad = False)
         
         # now copy the data
-        # np.copyto(new_tensor._base_ndarray, tensor.to('cpu').detach().numpy())
         new_tensor.copy_(tensor)
-
-#        if tensor.dim() is 0:
-#            new_tensor.data = tensor.clone()
-#        else:
 
         return new_tensor
 
