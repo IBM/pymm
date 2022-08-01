@@ -130,7 +130,6 @@ class shelved_torch_tensor(torch.Tensor, ShelvedCommon):
         if value_memory == None: # does not exist yet
 
             if isinstance(shape, torch.Size):
-                # ndshape = [shape.numel()]
                 ndshape = shape
             else:
                 ndshape = np.shape(shape)
@@ -171,7 +170,6 @@ class shelved_torch_tensor(torch.Tensor, ShelvedCommon):
         self._metadata_key = metadata_key
         self.name_on_shelf = name
         self.requires_grad = requires_grad # by default .grad is not there
-        # self.retains_grad = False # by default .grad is not there 
         return self
 
     def __delete__(self, instance):
