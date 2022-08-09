@@ -37,6 +37,7 @@ class checkpoint():
         if (type_name is np.ndarray):
             shelf_var_name = shelf_var_name + "__#" + type_name.__name__ + "#"
             if (shelf.__hasattr__(shelf_var_name)):
+                # in-place
                 self.numpy_save(self, shelf, data, shelf_var_name)
             else:     
                 setattr(shelf, shelf_var_name, data)
@@ -46,17 +47,35 @@ class checkpoint():
         if (self.is_type_torch(type_name)):
             shelf_var_name = shelf_var_name + "__#" + type_name.__name__ + "#"
             if (shelf.__hasattr__(shelf_var_name)):
+                # in-place
                 self.torch_save(self, shelf, data, shelf_var_name)
             else:   
                 setattr(shelf, shelf_var_name, data)
             return
- 
-        # basic shelf item
-        if ((type_name is int) or (type_name is bool) or (type_name is str) or (type_name is bytes) or (type_name is float)):
+
+        # basic shelf numbers - stored in numpy.array for in-place access 
+        if ((type_name is int) or (type_name is bool) or (type_name is bytes) or (type_name is float)):
             shelf_var_name = shelf_var_name + "__#" + type_name.__name__ +"#"
-            setattr(shelf, shelf_var_name, data)
-        else:
-            setattr(shelf, shelf_var_name + "__#pickle#", pickle.dumps(data))
+            if (shelf.__hasattr__(shelf_var_name)):
+                # in-place
+                self.numpy_save(self, shelf, np.array([data]), shelf_var_name)
+            else:    
+                setattr(shelf, shelf_var_name, np.array([data]))
+            return
+
+        # basic shelf numbers - stored in numpy.array in byte string format for in-place access
+        # In-place access occurs when the new string matches the original string or is shorter
+        if (type_name is str):
+            shelf_var_name = shelf_var_name + "__#" + type_name.__name__ +"#"
+            if (shelf.__hasattr__(shelf_var_name) and  (len(data) <= getattr(shelf, shelf_var_name)[0].nbytes)):
+                # in-place
+                self.numpy_save(self, shelf, np.array([data], dtype='S'), shelf_var_name)
+            else:    
+                setattr(shelf, shelf_var_name, np.array([data], dtype='S'))
+            return 
+
+        # default - save as pickle
+        setattr(shelf, shelf_var_name + "__#pickle#", pickle.dumps(data))
         
 
     ###############################################
@@ -246,11 +265,11 @@ class checkpoint():
 
     ###############################################
     ###### load primitives ##################
-    ###############################################
 
 
     def cast_var (type_var, var):
         if (type_var  == "str"):
+            var = var[0].decode()
             return str(var)
         if (type_var == "int"):
             return int(var)
