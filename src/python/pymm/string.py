@@ -125,6 +125,12 @@ class shelved_string(ShelvedCommon):
         else:
             raise TypeError
 
+    def shadow_type(self):
+        '''
+        Get the shadow type
+        '''
+        return str
+
     def persist(self):
         '''
         Flush cache and persistent all value memory
